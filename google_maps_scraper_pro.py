@@ -703,6 +703,17 @@ class ModernScraperGUI(QMainWindow):
         layout.addWidget(QLabel("Scraped Businesses Data:"))
         layout.addWidget(self.results_table)
         
+        # Add progress log below the table
+        log_label = QLabel("Scraping Progress & Logs:")
+        log_label.setObjectName("sectionLabel")
+        layout.addWidget(log_label)
+        
+        self.progress_log = QTextEdit()
+        self.progress_log.setObjectName("progressLog")
+        self.progress_log.setReadOnly(True)
+        self.progress_log.setMaximumHeight(200)
+        layout.addWidget(self.progress_log)
+        
         return frame
         
     def create_scraped_data_tab(self):
@@ -715,11 +726,13 @@ class ModernScraperGUI(QMainWindow):
         label.setObjectName("tabTitle")
         layout.addWidget(label)
         
-        # Progress log
-        self.progress_log = QTextEdit()
-        self.progress_log.setObjectName("progressLog")
-        self.progress_log.setReadOnly(True)
-        layout.addWidget(self.progress_log)
+        # Placeholder for future data visualization
+        data_label = QLabel("Data visualization and analytics coming soon...")
+        data_label.setAlignment(Qt.AlignCenter)
+        data_label.setObjectName("comingSoon")
+        layout.addWidget(data_label)
+        
+        layout.addStretch()
         
         self.tab_widget.addTab(tab, "Scraped Google Map Data")
         
