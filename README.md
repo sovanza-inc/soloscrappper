@@ -5,11 +5,12 @@
 **A high-performance, production-ready Python application for scraping Google My Business profiles with an ultra-optimized dark theme GUI**
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
-[![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/yourusername/google-maps-scraper)
+[![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey.svg)](https://github.com/sovanza-inc/soloscrappper)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![GitHub Issues](https://img.shields.io/github/issues/yourusername/google-maps-scraper.svg)](https://github.com/yourusername/google-maps-scraper/issues)
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/google-maps-scraper.svg)](https://github.com/yourusername/google-maps-scraper/stargazers)
-[![Build Status](https://img.shields.io/github/workflow/status/yourusername/google-maps-scraper/CI/main)](https://github.com/yourusername/google-maps-scraper/actions)
+[![GitHub Issues](https://img.shields.io/github/issues/sovanza-inc/soloscrappper.svg)](https://github.com/sovanza-inc/soloscrappper/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/sovanza-inc/soloscrappper.svg)](https://github.com/sovanza-inc/soloscrappper/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/sovanza-inc/soloscrappper.svg)](https://github.com/sovanza-inc/soloscrappper/network)
+[![Last Commit](https://img.shields.io/github/last-commit/sovanza-inc/soloscrappper.svg)](https://github.com/sovanza-inc/soloscrappper/commits/main)
 
 </div>
 
