@@ -1127,7 +1127,7 @@ class ScrapingThread(QThread):
         """Save results to CSV file"""
         try:
             with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
-                fieldnames = ['keyword', 'name', 'address', 'phone', 'website', 'rating', 'reviews', 'category']
+                fieldnames = ['keyword', 'name', 'address', 'phone', 'website', 'rating', 'category']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 
                 writer.writeheader()
@@ -1180,9 +1180,8 @@ class ModernScraperGUI(QMainWindow):
         main_layout.addWidget(self.tab_widget)
         
         # Create tabs
+        self.create_dashboard_tab()
         self.create_google_maps_tab()
-        self.create_scraped_data_tab()
-        self.create_other_tabs()
         
         # Status bar
         self.create_status_bar()
@@ -1243,7 +1242,118 @@ class ModernScraperGUI(QMainWindow):
         header_layout.addWidget(subtitle_label)
         
         main_layout.addWidget(header_frame)
+
+    def create_dashboard_tab(self):
+        """Create the dashboard tab with real-time statistics"""
+        tab = QWidget()
+        tab.setObjectName("dashboardTab")
+        layout = QVBoxLayout(tab)
+        layout.setSpacing(8)
+        layout.setContentsMargins(10, 10, 10, 10)
         
+        # Dashboard title
+        title_label = QLabel("📊 Scraping Dashboard")
+        title_label.setObjectName("dashboardTitle")
+        title_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(title_label)
+        
+        # Statistics grid
+        stats_frame = QFrame()
+        stats_frame.setObjectName("statsFrame")
+        stats_layout = QGridLayout(stats_frame)
+        stats_layout.setSpacing(8)
+        
+        # Total businesses card
+        self.total_businesses_card = self.create_stat_card("Total Businesses", "0", "📈")
+        stats_layout.addWidget(self.total_businesses_card, 0, 0)
+        
+        # Unique businesses card
+        self.unique_businesses_card = self.create_stat_card("Unique Businesses", "0", "🎯")
+        stats_layout.addWidget(self.unique_businesses_card, 0, 1)
+        
+        # Success rate card
+        self.success_rate_card = self.create_stat_card("Success Rate", "0%", "✅")
+        stats_layout.addWidget(self.success_rate_card, 0, 2)
+        
+        # Current keyword card
+        self.current_keyword_card = self.create_stat_card("Current Keyword", "Ready", "🔍")
+        stats_layout.addWidget(self.current_keyword_card, 1, 0)
+        
+        # Keywords processed card
+        self.keywords_processed_card = self.create_stat_card("Keywords Processed", "0", "📝")
+        stats_layout.addWidget(self.keywords_processed_card, 1, 1)
+        
+        # Scraping status card
+        self.scraping_status_card = self.create_stat_card("Status", "Idle", "⏸️")
+        stats_layout.addWidget(self.scraping_status_card, 1, 2)
+        
+        layout.addWidget(stats_frame)
+        
+        # Progress section
+        progress_frame = QFrame()
+        progress_frame.setObjectName("progressFrame")
+        progress_layout = QVBoxLayout(progress_frame)
+        
+        progress_title = QLabel("📊 Real-time Progress")
+        progress_title.setObjectName("sectionLabel")
+        progress_layout.addWidget(progress_title)
+        
+        # Progress bar
+        self.dashboard_progress_bar = QProgressBar()
+        self.dashboard_progress_bar.setObjectName("dashboardProgressBar")
+        self.dashboard_progress_bar.setTextVisible(True)
+        self.dashboard_progress_bar.setFormat("Ready to start scraping...")
+        progress_layout.addWidget(self.dashboard_progress_bar)
+        
+        # Recent activity log
+        activity_title = QLabel("📋 Recent Activity")
+        activity_title.setObjectName("sectionLabel")
+        progress_layout.addWidget(activity_title)
+        
+        self.dashboard_activity_log = QTextEdit()
+        self.dashboard_activity_log.setObjectName("dashboardActivityLog")
+        self.dashboard_activity_log.setReadOnly(True)
+        self.dashboard_activity_log.setMaximumHeight(120)
+        self.dashboard_activity_log.append("[Dashboard] Ready to start scraping...")
+        progress_layout.addWidget(self.dashboard_activity_log)
+        
+        layout.addWidget(progress_frame)
+        
+        # Initialize dashboard tracking variables
+        self.keywords_processed_count = 0
+        self.current_scraping_status = "Idle"
+        
+        self.tab_widget.addTab(tab, "📊 Dashboard")
+        
+    def create_stat_card(self, title, value, icon):
+        """Create a statistics card widget"""
+        card = QFrame()
+        card.setObjectName("statCard")
+        card_layout = QVBoxLayout(card)
+        card_layout.setAlignment(Qt.AlignCenter)
+        
+        # Icon and title row
+        header_layout = QHBoxLayout()
+        header_layout.setAlignment(Qt.AlignCenter)
+        
+        icon_label = QLabel(icon)
+        icon_label.setObjectName("statIcon")
+        header_layout.addWidget(icon_label)
+        
+        title_label = QLabel(title)
+        title_label.setObjectName("statTitle")
+        header_layout.addWidget(title_label)
+        
+        card_layout.addLayout(header_layout)
+        
+        # Value
+        value_label = QLabel(value)
+        value_label.setObjectName("statValue")
+        value_label.setAlignment(Qt.AlignCenter)
+        card_layout.addWidget(value_label)
+        
+        return card
+
     def create_google_maps_tab(self):
         """Create the main scraper tab"""
         tab = QWidget()
@@ -1340,7 +1450,7 @@ class ModernScraperGUI(QMainWindow):
         self.results_table.setObjectName("resultsTable")
         
         # Set columns
-        columns = ["Keyword", "Business Name", "Website", "Phone Number", "Address", "Ratings", "Google Map Link", "Reviews", "Category"]
+        columns = ["Keyword", "Business Name", "Website", "Phone Number", "Address", "Ratings", "Category"]
         self.results_table.setColumnCount(len(columns))
         self.results_table.setHorizontalHeaderLabels(columns)
         
@@ -1368,47 +1478,9 @@ class ModernScraperGUI(QMainWindow):
         
         return frame
         
-    def create_scraped_data_tab(self):
-        """Create the scraped data tab"""
-        tab = QWidget()
-        layout = QVBoxLayout(tab)
+
         
-        label = QLabel("Scraped Google Map Data")
-        label.setAlignment(Qt.AlignCenter)
-        label.setObjectName("tabTitle")
-        layout.addWidget(label)
-        
-        # Placeholder for future data visualization
-        data_label = QLabel("Data visualization and analytics coming soon...")
-        data_label.setAlignment(Qt.AlignCenter)
-        data_label.setObjectName("comingSoon")
-        layout.addWidget(data_label)
-        
-        layout.addStretch()
-        
-        self.tab_widget.addTab(tab, "Scraped Google Map Data")
-        
-    def create_other_tabs(self):
-        """Create other placeholder tabs"""
-        tab_names = [
-            "Social Links Extractor",
-            "Website Email Extractor", 
-            "Combined Data",
-            "Business Website Extractor",
-            "Decision Makers Finder",
-            "Captcha Free Scraping"
-        ]
-        
-        for name in tab_names:
-            tab = QWidget()
-            layout = QVBoxLayout(tab)
-            
-            label = QLabel(f"{name}\n\nComing Soon...")
-            label.setAlignment(Qt.AlignCenter)
-            label.setObjectName("comingSoon")
-            layout.addWidget(label)
-            
-            self.tab_widget.addTab(tab, name)
+
             
     def create_status_bar(self):
         """Create status bar"""
@@ -1657,6 +1729,97 @@ class ModernScraperGUI(QMainWindow):
                 color: #f0f6fc;
                 border-top: 1px solid #7c3aed;
             }
+            
+            /* Dashboard Styles */
+            #dashboardTitle {
+                font-size: 18px;
+                font-weight: bold;
+                color: #f0f6fc;
+                margin: 10px 0;
+                padding: 8px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #7c3aed, stop:1 #6d28d9);
+                border-radius: 6px;
+            }
+            
+            #statsFrame {
+                background: rgba(13, 17, 23, 0.9);
+                border: 1px solid #7c3aed;
+                border-radius: 8px;
+                padding: 10px;
+                margin: 5px 0;
+            }
+            
+            #statCard {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #21262d, stop:1 #161b22);
+                border: 1px solid #7c3aed;
+                border-radius: 6px;
+                padding: 8px;
+                min-height: 60px;
+                max-height: 70px;
+                min-width: 140px;
+            }
+            
+            #statCard:hover {
+                border-color: #6d28d9;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #30363d, stop:1 #21262d);
+            }
+            
+            #statIcon {
+                font-size: 14px;
+                margin-right: 5px;
+            }
+            
+            #statTitle {
+                color: #8b949e;
+                font-size: 10px;
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            
+            #statValue {
+                color: #f0f6fc;
+                font-size: 16px;
+                font-weight: bold;
+                margin-top: 5px;
+            }
+            
+            #progressFrame {
+                background: rgba(13, 17, 23, 0.9);
+                border: 1px solid #7c3aed;
+                border-radius: 8px;
+                padding: 10px;
+                margin: 5px 0;
+            }
+            
+            #dashboardProgressBar {
+                background: #21262d;
+                border: 1px solid #7c3aed;
+                border-radius: 4px;
+                text-align: center;
+                font-weight: bold;
+                color: #f0f6fc;
+                height: 20px;
+            }
+            
+            #dashboardProgressBar::chunk {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #7c3aed, stop:1 #6d28d9);
+                border-radius: 3px;
+            }
+            
+            #dashboardActivityLog {
+                background: #0d1117;
+                color: #7c3aed;
+                border: 1px solid #7c3aed;
+                border-radius: 4px;
+                font-family: 'Courier New', monospace;
+                font-size: 9px;
+                padding: 5px;
+                max-height: 120px;
+            }
         """)
         
     def show_license_dialog(self):
@@ -1696,6 +1859,11 @@ class ModernScraperGUI(QMainWindow):
         self.scraping_thread.business_signal.connect(self.add_business_to_table)
         self.scraping_thread.keyword_signal.connect(self.update_current_keyword)
         self.scraping_thread.finished_signal.connect(self.scraping_finished)
+        
+        # Connect dashboard signals
+        self.scraping_thread.progress_signal.connect(self.update_dashboard_activity)
+        self.scraping_thread.business_signal.connect(self.update_dashboard_stats)
+        self.scraping_thread.keyword_signal.connect(self.update_dashboard_keyword)
         self.scraping_thread.start()
         
         self.log_progress("🚀 Starting Google Maps scraping...")
@@ -1787,6 +1955,32 @@ class ModernScraperGUI(QMainWindow):
         self.total_businesses = 0
         self.unique_businesses = 0
         self.update_stats()
+        
+        # Reset dashboard
+        if hasattr(self, 'total_businesses_card'):
+            total_value = self.total_businesses_card.findChild(QLabel, "statValue")
+            unique_value = self.unique_businesses_card.findChild(QLabel, "statValue")
+            success_value = self.success_rate_card.findChild(QLabel, "statValue")
+            keyword_value = self.current_keyword_card.findChild(QLabel, "statValue")
+            processed_value = self.keywords_processed_card.findChild(QLabel, "statValue")
+            status_value = self.scraping_status_card.findChild(QLabel, "statValue")
+            
+            if total_value: total_value.setText("0")
+            if unique_value: unique_value.setText("0")
+            if success_value: success_value.setText("0%")
+            if keyword_value: keyword_value.setText("Ready")
+            if processed_value: processed_value.setText("0")
+            if status_value: status_value.setText("⏸️ Idle")
+        
+        # Reset dashboard progress and activity
+        if hasattr(self, 'dashboard_progress_bar'):
+            self.dashboard_progress_bar.setValue(0)
+            self.dashboard_progress_bar.setFormat("Ready to start scraping...")
+        
+        if hasattr(self, 'dashboard_activity_log'):
+            self.dashboard_activity_log.clear()
+            self.dashboard_activity_log.append("[Dashboard] Ready to start scraping...")
+        
         self.log_progress("🗑️ Results cleared")
         
     def log_progress(self, message: str):
@@ -1804,13 +1998,10 @@ class ModernScraperGUI(QMainWindow):
         row = self.results_table.rowCount()
         self.results_table.insertRow(row)
         
-        columns = ["keyword", "name", "website", "phone", "address", "rating", "", "reviews", "category"]
+        columns = ["keyword", "name", "website", "phone", "address", "rating", "category"]
         
         for col, field in enumerate(columns):
-            if field == "":
-                item = QTableWidgetItem("N/A")  # Placeholder for Google Map Link
-            else:
-                item = QTableWidgetItem(str(business_data.get(field, '')))
+            item = QTableWidgetItem(str(business_data.get(field, '')))
             self.results_table.setItem(row, col, item)
         
         # Update stats
@@ -1833,6 +2024,71 @@ class ModernScraperGUI(QMainWindow):
         """Update statistics display"""
         # Removed business totals display for cleaner interface
         pass
+    
+    def update_dashboard_activity(self, message: str):
+        """Update dashboard activity log"""
+        if hasattr(self, 'dashboard_activity_log'):
+            timestamp = time.strftime("%H:%M:%S")
+            formatted_message = f"[{timestamp}] {message}"
+            self.dashboard_activity_log.append(formatted_message)
+            # Keep only last 50 messages for performance
+            if self.dashboard_activity_log.document().blockCount() > 50:
+                cursor = self.dashboard_activity_log.textCursor()
+                cursor.movePosition(cursor.Start)
+                cursor.select(cursor.BlockUnderCursor)
+                cursor.removeSelectedText()
+                cursor.deletePreviousChar()  # Remove the newline
+    
+    def update_dashboard_stats(self, business_data: dict):
+        """Update dashboard statistics when a new business is found"""
+        if hasattr(self, 'total_businesses_card'):
+            # Find the value labels in the stat cards
+            total_value = self.total_businesses_card.findChild(QLabel, "statValue")
+            unique_value = self.unique_businesses_card.findChild(QLabel, "statValue")
+            success_value = self.success_rate_card.findChild(QLabel, "statValue")
+            
+            if total_value:
+                total_value.setText(str(self.total_businesses))
+            if unique_value:
+                unique_value.setText(str(self.unique_businesses))
+            if success_value and self.total_businesses > 0:
+                success_rate = (self.unique_businesses / self.total_businesses) * 100
+                success_value.setText(f"{success_rate:.1f}%")
+            
+            # Update progress bar
+            if hasattr(self, 'scraping_thread') and self.scraping_thread:
+                total_keywords = len(self.scraping_thread.keywords)
+                # Estimate progress based on current activity
+                current_progress = min(95, (self.total_businesses / max(1, total_keywords * 10)) * 100)
+                self.dashboard_progress_bar.setValue(int(current_progress))
+                self.dashboard_progress_bar.setFormat(f"Processing... {self.total_businesses} businesses found")
+    
+    def update_dashboard_keyword(self, keyword: str):
+        """Update dashboard with current keyword being processed"""
+        if hasattr(self, 'current_keyword_card'):
+            # Find the value label in the current keyword card
+            keyword_value = self.current_keyword_card.findChild(QLabel, "statValue")
+            if keyword_value:
+                keyword_value.setText(keyword)
+            
+            # Update keywords processed count
+            if hasattr(self, 'scraping_thread') and self.scraping_thread:
+                current_index = self.scraping_thread.keywords.index(keyword) + 1 if keyword in self.scraping_thread.keywords else 0
+                total_keywords = len(self.scraping_thread.keywords)
+                
+                processed_value = self.keywords_processed_card.findChild(QLabel, "statValue")
+                if processed_value:
+                    processed_value.setText(f"{current_index}/{total_keywords}")
+                
+                # Update progress bar
+                progress = (current_index / total_keywords) * 100 if total_keywords > 0 else 0
+                self.dashboard_progress_bar.setValue(int(progress))
+                self.dashboard_progress_bar.setFormat(f"Processing: {keyword}")
+                
+                # Update status
+                status_value = self.scraping_status_card.findChild(QLabel, "statValue")
+                if status_value:
+                    status_value.setText("🔄 Scraping")
         
     def update_current_keyword(self, keyword: str):
         """Update the current keyword display"""
@@ -1842,7 +2098,22 @@ class ModernScraperGUI(QMainWindow):
     def scraping_finished(self, result_count):
         """Handle scraping completion"""
         self.log_progress(f"🎉 Scraping completed! Total businesses found: {result_count}")
-        # Removed current keyword display for cleaner interface
+        
+        # Update dashboard status to completed
+        if hasattr(self, 'scraping_status_card'):
+            status_value = self.scraping_status_card.findChild(QLabel, "statValue")
+            if status_value:
+                status_value.setText("✅ Complete")
+        
+        # Update progress bar to 100%
+        if hasattr(self, 'dashboard_progress_bar'):
+            self.dashboard_progress_bar.setValue(100)
+            self.dashboard_progress_bar.setFormat(f"Completed! {result_count} businesses found")
+        
+        # Add completion message to dashboard activity
+        if hasattr(self, 'dashboard_activity_log'):
+            timestamp = time.strftime("%H:%M:%S")
+            self.dashboard_activity_log.append(f"[{timestamp}] 🎉 Scraping completed! Found {result_count} businesses")
         
         if result_count > 0:
             QMessageBox.information(
