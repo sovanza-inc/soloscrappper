@@ -45,10 +45,11 @@ except ImportError:
 class GoogleMapsScraper:
     """Professional web scraper using Playwright with real Chrome browser"""
     
-    def __init__(self):
+    def __init__(self, scraping_thread=None):
         self.browser_context: Optional[BrowserContext] = None
         self.page: Optional[Page] = None
         self.results: List[Dict[str, str]] = []
+        self.scraping_thread = scraping_thread
         
     async def setup_browser(self, chrome_path: str, profile_path: str, progress_callback=None) -> bool:
         """Setup Chrome browser with persistent context"""
@@ -186,6 +187,13 @@ class GoogleMapsScraper:
                     progress_callback.emit(f"🔍 This might indicate: 1) No search results 2) Page didn't load properly 3) Google Maps changed their layout")
                 return []
             
+            # Check if paused before scrolling
+            if self.scraping_thread:
+                while self.scraping_thread.is_paused:
+                    await asyncio.sleep(0.1)
+                if not self.scraping_thread.is_running:
+                    return []
+            
             # Scroll to load all results
             await self._scroll_results_panel(progress_callback)
             
@@ -273,6 +281,13 @@ class GoogleMapsScraper:
                 
                 await asyncio.sleep(random.uniform(0.3, 0.8))  # Optimized wait for content to load
                 
+                # Check if paused during scrolling
+                if self.scraping_thread:
+                    while self.scraping_thread.is_paused:
+                        await asyncio.sleep(0.1)
+                    if not self.scraping_thread.is_running:
+                        return
+                
                 # Count current business listings with improved detection
                 current_business_count = await self.page.evaluate("""
                     () => {
@@ -352,6 +367,13 @@ class GoogleMapsScraper:
             
             # Process each business by clicking and extracting detailed info
             for i, element_info in enumerate(business_elements):  # Process all businesses found
+                # Check if paused before processing each business
+                if self.scraping_thread:
+                    while self.scraping_thread.is_paused:
+                        await asyncio.sleep(0.1)
+                    if not self.scraping_thread.is_running:
+                        return businesses
+                
                 if progress_callback:
                     progress_callback.emit(f"🔄 Processing business {i+1}/{len(business_elements)}")
                 
@@ -1011,12 +1033,22 @@ class ScrapingThread(QThread):
         self.chrome_path = chrome_path
         self.profile_path = profile_path
         self.output_file = output_file
-        self.scraper = GoogleMapsScraper()
+        self.scraper = GoogleMapsScraper(self)
         self.is_running = True
+        self.is_paused = False
         
     def stop(self):
         """Stop the scraping process"""
         self.is_running = False
+        self.is_paused = False
+        
+    def pause(self):
+        """Pause the scraping process"""
+        self.is_paused = True
+        
+    def resume(self):
+        """Resume the scraping process"""
+        self.is_paused = False
         
     def run(self):
         """Run the scraping process"""
@@ -1044,6 +1076,13 @@ class ScrapingThread(QThread):
                 if not self.is_running:
                     break
                 
+                # Check for pause state
+                while self.is_paused and self.is_running:
+                    await asyncio.sleep(0.5)  # Wait while paused
+                
+                if not self.is_running:
+                    break
+                
                 # Emit current keyword signal
                 self.keyword_signal.emit(keyword)
                 self.progress_signal.emit(f"🔄 Processing keyword {i}/{len(self.keywords)}: {keyword}")
@@ -1059,7 +1098,16 @@ class ScrapingThread(QThread):
                 if i < len(self.keywords) and self.is_running:
                     delay = random.uniform(0.5, 1.5)
                     self.progress_signal.emit(f"⏱️ Waiting {delay:.1f} seconds before next keyword...")
-                    await asyncio.sleep(delay)
+                    
+                    # Respect pause during delay
+                    delay_start = time.time()
+                    while time.time() - delay_start < delay and self.is_running:
+                        if self.is_paused:
+                            while self.is_paused and self.is_running:
+                                await asyncio.sleep(0.5)
+                            if not self.is_running:
+                                break
+                        await asyncio.sleep(0.1)
             
             # Save results
             if all_results:
@@ -1157,29 +1205,41 @@ class ModernScraperGUI(QMainWindow):
         header_layout = QVBoxLayout(header_frame)
         header_layout.setAlignment(Qt.AlignCenter)
         
-        # Main title
+        # Top row with logo, title and license button
+        top_row_layout = QHBoxLayout()
+        
+        # Logo image
+        logo_label = QLabel()
+        logo_pixmap = QPixmap("launchericonplain.png")
+        if not logo_pixmap.isNull():
+            # Scale the logo to fit nicely in header
+            scaled_pixmap = logo_pixmap.scaled(60, 60, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(scaled_pixmap)
+        logo_label.setObjectName("logoLabel")
+        
+        # Main title (left-aligned)
         title_label = QLabel("Solo Scrapper")
         title_label.setObjectName("mainTitle")
-        title_label.setAlignment(Qt.AlignCenter)
-        
-        # Subtitle
-        subtitle_label = QLabel("Professional Web Scraping Tool")
-        subtitle_label.setObjectName("subtitle")
-        subtitle_label.setAlignment(Qt.AlignCenter)
+        title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         
         # License button
         license_btn = QPushButton("Add Licence Key")
         license_btn.setObjectName("licenseBtn")
         license_btn.clicked.connect(self.show_license_dialog)
         
-        # Header layout
-        title_layout = QHBoxLayout()
-        title_layout.addStretch()
-        title_layout.addWidget(title_label)
-        title_layout.addStretch()
-        title_layout.addWidget(license_btn)
+        # Add widgets to top row
+        top_row_layout.addWidget(logo_label)
+        top_row_layout.addSpacing(15)  # Space between logo and title
+        top_row_layout.addWidget(title_label)
+        top_row_layout.addStretch()  # Push license button to the right
+        top_row_layout.addWidget(license_btn)
         
-        header_layout.addLayout(title_layout)
+        # Subtitle (centered)
+        subtitle_label = QLabel("Professional Web Scraping Tool")
+        subtitle_label.setObjectName("subtitle")
+        subtitle_label.setAlignment(Qt.AlignCenter)
+        
+        header_layout.addLayout(top_row_layout)
         header_layout.addWidget(subtitle_label)
         
         main_layout.addWidget(header_frame)
@@ -1378,6 +1438,11 @@ class ModernScraperGUI(QMainWindow):
                 font-weight: bold;
                 color: #f0f6fc;
                 margin: 10px;
+            }
+            
+            #logoLabel {
+                margin: 10px;
+                padding: 5px;
             }
             
             #subtitle {
@@ -1637,17 +1702,27 @@ class ModernScraperGUI(QMainWindow):
         
     def pause_scraping(self):
         """Pause scraping process"""
-        self.log_progress("⏸️ Scraping paused")
+        if self.scraping_thread and self.scraping_thread.isRunning():
+            self.scraping_thread.pause()
+            self.log_progress("⏸️ Scraping paused")
+        else:
+            self.log_progress("⚠️ No active scraping process to pause")
         
     def resume_scraping(self):
         """Resume scraping process"""
-        self.log_progress("▶️ Scraping resumed")
+        if self.scraping_thread and self.scraping_thread.isRunning():
+            self.scraping_thread.resume()
+            self.log_progress("▶️ Scraping resumed")
+        else:
+            self.log_progress("⚠️ No paused scraping process to resume")
         
     def stop_scraping(self):
         """Stop the scraping process"""
-        if self.scraping_thread:
+        if self.scraping_thread and self.scraping_thread.isRunning():
             self.scraping_thread.stop()
             self.log_progress("🛑 Stopping scraping process...")
+        else:
+            self.log_progress("⚠️ No active scraping process to stop")
         
     def save_all_csv(self):
         """Save all results to CSV"""
@@ -1781,11 +1856,11 @@ class ModernScraperGUI(QMainWindow):
 def main():
     """Main entry point"""
     app = QApplication(sys.argv)
-    app.setApplicationName("All In One Scraper Pro")
-    app.setOrganizationName("ScraperPro")
+    app.setApplicationName("Solo Scrapper")
+    app.setOrganizationName("SoloScrapper")
     
-    # Set application icon (if you have one)
-    # app.setWindowIcon(QIcon('icon.png'))
+    # Set application icon
+    app.setWindowIcon(QIcon('launchericon_rounded.png'))
     
     # Create and show the main window
     window = ModernScraperGUI()
