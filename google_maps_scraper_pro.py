@@ -1366,7 +1366,7 @@ class ModernScraperGUI(QMainWindow):
         # Left panel - Input and controls
         left_panel = QFrame()
         left_panel.setObjectName("leftPanel")
-        left_panel.setFixedWidth(350)
+        left_panel.setFixedWidth(380)
         left_layout = QVBoxLayout(left_panel)
         left_layout.setSpacing(6)
         left_layout.setContentsMargins(8, 8, 8, 8)
@@ -1434,28 +1434,6 @@ class ModernScraperGUI(QMainWindow):
         location_grid.addWidget(self.city_combo, 2, 1)
         
         left_layout.addLayout(location_grid)
-        
-        # Additional location modifiers
-        additional_location_label = QLabel("Additional Location Modifiers:")
-        additional_location_label.setObjectName("sectionLabel")
-        left_layout.addWidget(additional_location_label)
-        
-        self.location_modifiers = QTextEdit()
-        self.location_modifiers.setObjectName("locationModifiers")
-        self.location_modifiers.setPlaceholderText("near me\ndowntown\nnearby\nin my area")
-        self.location_modifiers.setMaximumHeight(60)
-        left_layout.addWidget(self.location_modifiers)
-        
-        # Business type modifiers
-        business_type_label = QLabel("Business Type Modifiers:")
-        business_type_label.setObjectName("sectionLabel")
-        left_layout.addWidget(business_type_label)
-        
-        self.business_type_modifiers = QTextEdit()
-        self.business_type_modifiers.setObjectName("businessTypeModifiers")
-        self.business_type_modifiers.setPlaceholderText("best\ntop rated\ncheap\nexpensive\n24 hour\nopen now")
-        self.business_type_modifiers.setMaximumHeight(80)
-        left_layout.addWidget(self.business_type_modifiers)
         
         # Compact button layout
         button_layout = QHBoxLayout()
@@ -1531,35 +1509,14 @@ class ModernScraperGUI(QMainWindow):
         # Get selected locations
         selected_locations = self.get_selected_locations()
         
-        # Get additional location modifiers
-        additional_location_mods = [mod.strip() for mod in self.location_modifiers.toPlainText().split('\n') if mod.strip()]
-        
-        # Combine selected locations with additional modifiers
-        all_location_mods = selected_locations + additional_location_mods
-        
-        business_mods = [mod.strip() for mod in self.business_type_modifiers.toPlainText().split('\n') if mod.strip()]
-        
         variations = []
         
         # Base keyword alone
         variations.append(base_keyword)
         
-        # Base keyword + location modifiers
-        for loc_mod in all_location_mods:
-            variations.append(f"{base_keyword} {loc_mod}")
+        # Base keyword + location modifiers (only "in" format)
+        for loc_mod in selected_locations:
             variations.append(f"{base_keyword} in {loc_mod}")
-            variations.append(f"{base_keyword} near {loc_mod}")
-        
-        # Base keyword + business type modifiers
-        for bus_mod in business_mods:
-            variations.append(f"{bus_mod} {base_keyword}")
-        
-        # Combination: business type + base keyword + location
-        for bus_mod in business_mods:
-            for loc_mod in all_location_mods:
-                variations.append(f"{bus_mod} {base_keyword} {loc_mod}")
-                variations.append(f"{bus_mod} {base_keyword} in {loc_mod}")
-                variations.append(f"{bus_mod} {base_keyword} near {loc_mod}")
         
         # Remove duplicates while preserving order
         unique_variations = []
@@ -1581,8 +1538,6 @@ class ModernScraperGUI(QMainWindow):
     def clear_keyword_variations(self):
         """Clear all keyword variation inputs and outputs"""
         self.base_keyword_input.clear()
-        self.location_modifiers.clear()
-        self.business_type_modifiers.clear()
         self.variations_output.clear()
         self.variations_count_label.setText("Count: 0")
     
@@ -1999,10 +1954,26 @@ class ModernScraperGUI(QMainWindow):
                 background: #da3633;
                 color: #f0f6fc;
                 border: none;
-                padding: 10px;
+                padding: 10px 16px;
                 border-radius: 8px;
+                font-size: 13px;
                 font-weight: bold;
-                margin: 2px 0;
+                margin: 3px 2px;
+            }
+            
+            #copyBtn {
+                background: #7c3aed;
+                color: #f0f6fc;
+                border: none;
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: bold;
+                margin: 3px 0;
+            }
+            
+            #copyBtn:hover {
+                background: #6d28d9;
             }
             
             /* Removed totals frame styling for cleaner interface */
@@ -2080,14 +2051,14 @@ class ModernScraperGUI(QMainWindow):
                 color: #f0f6fc;
             }
             
-            #baseKeywordInput, #locationModifiersInput, #businessTypeModifiersInput {
+            #baseKeywordInput {
                 background: #21262d;
                 border: 2px solid #7c3aed;
                 border-radius: 8px;
                 color: #f0f6fc;
                 font-size: 12px;
-                padding: 10px;
-                margin: 5px 0;
+                padding: 8px;
+                margin: 3px 0;
             }
             
             #countryCombo, #stateCombo, #cityCombo {
@@ -2127,11 +2098,11 @@ class ModernScraperGUI(QMainWindow):
                 background: #238636;
                 color: #f0f6fc;
                 border: none;
-                padding: 12px 20px;
+                padding: 10px 16px;
                 border-radius: 8px;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: bold;
-                margin: 5px;
+                margin: 3px 2px;
             }
             
             #generateBtn:hover {
