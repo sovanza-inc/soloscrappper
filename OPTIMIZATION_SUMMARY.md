@@ -1,4 +1,4 @@
-# Google Maps Scraper - Performance Optimization Summary
+# Solo Scrapper - Performance Optimization Summary
 
 ## 🚀 Key Optimizations Implemented
 
@@ -78,7 +78,7 @@ return await single_js_call_extract_all_businesses()
 
 ```bash
 # Run the optimized GUI application (only version available)
-python3 google_maps_scraper_dark.py
+python3 google_maps_scraper_pro.py
 
 # Test the optimizations
 python3 test_optimized_scraper.py

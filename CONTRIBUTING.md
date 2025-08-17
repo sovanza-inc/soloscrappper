@@ -1,6 +1,6 @@
-# Contributing to Google Maps Scraper
+# Contributing to Solo Scrapper
 
-Thank you for your interest in contributing to the Google Maps Scraper project! We welcome contributions from the community.
+Thank you for your interest in contributing to the Solo Scrapper project! We welcome contributions from the community.
 
 ## Code of Conduct
 
@@ -107,7 +107,7 @@ flake8 .
 
 ```
 google-maps-scraper/
-├── google_maps_scraper_dark.py    # Main application
+├── google_maps_scraper_pro.py     # Main application
 ├── test_scraper.py                # Basic tests
 ├── test_optimized_scraper.py      # Performance tests
 ├── requirements.txt               # Dependencies

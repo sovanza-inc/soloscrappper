@@ -1,4 +1,4 @@
-# �️ Google Maps Scraper - Ultra-Fast Business Data Extractor
+# 🗺️ Solo Scrapper - Ultra-Fast Business Data Extractor
 
 <div align="center">
 
@@ -26,14 +26,14 @@
 
 ## Features
 
-- **GUI Interface**: User-friendly tkinter-based interface
+- **Modern GUI Interface**: Professional PyQt5-based dark theme interface
 - **Real Chrome Browser**: Uses your actual Chrome browser with persistent context
 - **Keyword Input**: Manual input or load from text file
 - **Comprehensive Scraping**: Extracts business name, address, phone, website, rating, reviews, and category
 - **CSV Export**: Saves results to CSV file
 - **Live Progress**: Real-time scraping progress and logs
 - **Human-like Behavior**: Random delays and scrolling to mimic human activity
-- **Executable Creation**: Can be compiled to standalone .exe/.app files
+- **Unlimited Results**: No artificial limits on scraped businesses
 
 ## Requirements
 
@@ -80,7 +80,7 @@ This will automatically install all dependencies and Playwright browsers.
 
 #### Optimized Version (Ultra-Fast)
 ```bash
-python google_maps_scraper_dark.py
+python google_maps_scraper_pro.py
 ```
 
 This is the most optimized version with:
@@ -132,17 +132,17 @@ pip install pyinstaller
 
 #### Option 1: Command line (Recommended)
 ```bash
-pyinstaller --onefile --noconsole google_maps_scraper_dark.py
+pyinstaller --onefile --noconsole google_maps_scraper_pro.py
 ```
 
 #### Option 2: With custom name and icon
 ```bash
-pyinstaller --onefile --noconsole --name "GoogleMapsScraper" google_maps_scraper_dark.py
+pyinstaller --onefile --noconsole --name "SoloScrapper" google_maps_scraper_pro.py
 ```
 
 #### Option 3: Advanced with additional options
 ```bash
-pyinstaller --onefile --noconsole --name "GoogleMapsScraper" --add-data "sample_keywords.txt;." google_maps_scraper_dark.py
+pyinstaller --onefile --noconsole --name "SoloScrapper" --add-data "sample_keywords.txt;." google_maps_scraper_pro.py
 ```
 
 The executable will be created in the `dist/` directory.

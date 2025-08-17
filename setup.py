@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for Google Maps Scraper
+Setup script for Solo Scrapper
 Installs required dependencies and Playwright browsers
 """
 
@@ -32,7 +32,7 @@ def run_command(command, description):
 
 def main():
     """Main setup function"""
-    print("Google Maps Scraper - Setup Script")
+    print("Solo Scrapper - Setup Script")
     print("="*50)
     
     # Check Python version
@@ -62,11 +62,9 @@ def main():
     print("✅ Setup completed successfully!")
     print("="*50)
     print("\nYou can now run the scraper with:")
-    print("python google_maps_scraper.py (tkinter version)")
-    print("python google_maps_scraper_pyqt.py (PyQt5 version - recommended)")
+    print("python google_maps_scraper_pro.py (PyQt5 version - recommended)")
     print("\nOr create an executable with:")
-    print("pyinstaller google_maps_scraper_pyqt.spec (PyQt5 version)")
-    print("pyinstaller --onefile --noconsole google_maps_scraper.py (tkinter version)")
+    print("pyinstaller --onefile --noconsole google_maps_scraper_pro.py")
 
 if __name__ == "__main__":
     main()

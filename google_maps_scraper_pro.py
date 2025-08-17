@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-All In One Scraper Pro - Google Maps Scraper
+Solo Scrapper Pro - Professional Web Scraping Tool
 Modern PyQt5 GUI Application with Professional Design
 """
 
@@ -43,7 +43,7 @@ except ImportError:
 
 
 class GoogleMapsScraper:
-    """Google Maps scraper using Playwright with real Chrome browser"""
+    """Professional web scraper using Playwright with real Chrome browser"""
     
     def __init__(self):
         self.browser_context: Optional[BrowserContext] = None
@@ -1093,7 +1093,7 @@ class ScrapingThread(QThread):
 
 
 class ModernScraperGUI(QMainWindow):
-    """Modern PyQt5 GUI interface for Google Maps scraper"""
+    """Modern PyQt5 GUI interface for Solo Scrapper"""
     
     def __init__(self):
         super().__init__()
@@ -1107,7 +1107,7 @@ class ModernScraperGUI(QMainWindow):
         
     def init_ui(self):
         """Initialize the user interface"""
-        self.setWindowTitle("All In One Scraper Pro - Making Your Life Easier")
+        self.setWindowTitle("Solo Scrapper - Making Your Life Easier")
         self.setGeometry(100, 100, 1200, 800)
         self.setMinimumSize(1000, 700)
         
@@ -1158,12 +1158,12 @@ class ModernScraperGUI(QMainWindow):
         header_layout.setAlignment(Qt.AlignCenter)
         
         # Main title
-        title_label = QLabel("All In One Scraper Pro")
+        title_label = QLabel("Solo Scrapper")
         title_label.setObjectName("mainTitle")
         title_label.setAlignment(Qt.AlignCenter)
         
         # Subtitle
-        subtitle_label = QLabel("Making Your Life Easier")
+        subtitle_label = QLabel("Professional Web Scraping Tool")
         subtitle_label.setObjectName("subtitle")
         subtitle_label.setAlignment(Qt.AlignCenter)
         
@@ -1185,7 +1185,7 @@ class ModernScraperGUI(QMainWindow):
         main_layout.addWidget(header_frame)
         
     def create_google_maps_tab(self):
-        """Create the Google Maps scraper tab"""
+        """Create the main scraper tab"""
         tab = QWidget()
         tab.setObjectName("googleMapsTab")
         layout = QHBoxLayout(tab)
@@ -1387,41 +1387,41 @@ class ModernScraperGUI(QMainWindow):
         self.status_bar.showMessage("Ready to scrape Google Maps")
         
     def apply_modern_theme(self):
-        """Apply modern dark theme"""
+        """Apply modern ultra-dark theme"""
         self.setStyleSheet("""
             /* Main Window */
             QMainWindow {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #2c3e50, stop:1 #34495e);
-                color: white;
+                    stop:0 #0d1117, stop:1 #161b22);
+                color: #f0f6fc;
             }
             
             /* Header */
             #headerFrame {
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #34495e, stop:1 #2c3e50);
-                border-bottom: 2px solid #3498db;
+                    stop:0 #161b22, stop:1 #0d1117);
+                border-bottom: 2px solid #7c3aed;
             }
             
             #mainTitle {
                 font-size: 28px;
                 font-weight: bold;
-                color: white;
+                color: #f0f6fc;
                 margin: 10px;
             }
             
             #subtitle {
                 font-size: 14px;
-                color: #2ecc71;
-                background: rgba(46, 204, 113, 0.2);
+                color: #7c3aed;
+                background: rgba(124, 58, 237, 0.15);
                 padding: 5px 15px;
                 border-radius: 15px;
                 margin: 5px;
             }
             
             #licenseBtn {
-                background: #3498db;
-                color: white;
+                background: #7c3aed;
+                color: #f0f6fc;
                 border: none;
                 padding: 8px 15px;
                 border-radius: 5px;
@@ -1430,18 +1430,18 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #licenseBtn:hover {
-                background: #2980b9;
+                background: #6d28d9;
             }
             
             /* Tab Widget */
             QTabWidget::pane {
-                border: 1px solid #34495e;
-                background: #2c3e50;
+                border: 1px solid #21262d;
+                background: #0d1117;
             }
             
             QTabBar::tab {
-                background: #5dade2;
-                color: white;
+                background: #21262d;
+                color: #f0f6fc;
                 padding: 10px 15px;
                 margin-right: 2px;
                 border-top-left-radius: 5px;
@@ -1450,63 +1450,63 @@ class ModernScraperGUI(QMainWindow):
             }
             
             QTabBar::tab:selected {
-                background: #3498db;
+                background: #7c3aed;
             }
             
             QTabBar::tab:hover {
-                background: #2980b9;
+                background: #30363d;
             }
             
             /* Left Panel */
             #leftPanel {
-                background: rgba(52, 73, 94, 0.8);
-                border-right: 2px solid #3498db;
+                background: rgba(13, 17, 23, 0.9);
+                border-right: 2px solid #7c3aed;
                 border-radius: 10px;
                 margin: 5px;
             }
             
             /* Input Fields */
             #keywordsInput {
-                background: #34495e;
-                border: 2px solid #3498db;
+                background: #21262d;
+                border: 2px solid #7c3aed;
                 border-radius: 8px;
-                color: white;
+                color: #f0f6fc;
                 font-size: 12px;
                 padding: 10px;
             }
             
             /* Stats Frame */
             #statsFrame {
-                background: rgba(46, 204, 113, 0.1);
-                border: 2px solid #2ecc71;
+                background: rgba(124, 58, 237, 0.1);
+                border: 2px solid #7c3aed;
                 border-radius: 10px;
                 padding: 10px;
                 margin: 10px 0;
             }
             
             #statsLabel {
-                color: #2ecc71;
+                color: #7c3aed;
                 font-weight: bold;
                 font-size: 14px;
             }
             
             #statsNumber {
-                color: white;
+                color: #f0f6fc;
                 font-size: 24px;
                 font-weight: bold;
                 text-align: center;
             }
             
             #currentKeyword {
-                color: #e74c3c;
+                color: #f85149;
                 font-size: 12px;
                 font-style: italic;
             }
             
             /* Control Buttons */
             #scrapeBtn {
-                background: #2ecc71;
-                color: white;
+                background: #238636;
+                color: #f0f6fc;
                 border: none;
                 padding: 12px;
                 border-radius: 8px;
@@ -1516,12 +1516,12 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #scrapeBtn:hover {
-                background: #27ae60;
+                background: #2ea043;
             }
             
             #pauseBtn {
-                background: #f39c12;
-                color: white;
+                background: #fb8500;
+                color: #f0f6fc;
                 border: none;
                 padding: 10px;
                 border-radius: 8px;
@@ -1530,12 +1530,12 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #pauseBtn:hover {
-                background: #e67e22;
+                background: #ffb700;
             }
             
             #resumeBtn {
-                background: #2ecc71;
-                color: white;
+                background: #238636;
+                color: #f0f6fc;
                 border: none;
                 padding: 10px;
                 border-radius: 8px;
@@ -1544,8 +1544,8 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #stopBtn {
-                background: #e74c3c;
-                color: white;
+                background: #da3633;
+                color: #f0f6fc;
                 border: none;
                 padding: 10px;
                 border-radius: 8px;
@@ -1554,12 +1554,12 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #stopBtn:hover {
-                background: #c0392b;
+                background: #f85149;
             }
             
             #saveAllBtn, #saveUniqueBtn {
-                background: #3498db;
-                color: white;
+                background: #7c3aed;
+                color: #f0f6fc;
                 border: none;
                 padding: 10px;
                 border-radius: 8px;
@@ -1568,12 +1568,12 @@ class ModernScraperGUI(QMainWindow):
             }
             
             #saveAllBtn:hover, #saveUniqueBtn:hover {
-                background: #2980b9;
+                background: #6d28d9;
             }
             
             #clearBtn {
-                background: #e74c3c;
-                color: white;
+                background: #da3633;
+                color: #f0f6fc;
                 border: none;
                 padding: 10px;
                 border-radius: 8px;
@@ -1583,15 +1583,15 @@ class ModernScraperGUI(QMainWindow):
             
             /* Totals Frame */
             #totalsFrame {
-                background: rgba(52, 152, 219, 0.1);
-                border: 2px solid #3498db;
+                background: rgba(124, 58, 237, 0.1);
+                border: 2px solid #7c3aed;
                 border-radius: 10px;
                 padding: 10px;
                 margin: 10px 0;
             }
             
             #totalLabel, #uniqueLabel {
-                color: #3498db;
+                color: #7c3aed;
                 font-weight: bold;
                 font-size: 14px;
                 margin: 5px 0;
@@ -1599,42 +1599,42 @@ class ModernScraperGUI(QMainWindow):
             
             /* Results Table */
             #resultsFrame {
-                background: rgba(52, 73, 94, 0.8);
+                background: rgba(13, 17, 23, 0.9);
                 border-radius: 10px;
                 margin: 5px;
                 padding: 10px;
             }
             
             #resultsTable {
-                background: #34495e;
-                color: white;
-                border: 1px solid #3498db;
+                background: #21262d;
+                color: #f0f6fc;
+                border: 1px solid #7c3aed;
                 border-radius: 5px;
-                gridline-color: #3498db;
+                gridline-color: #7c3aed;
             }
             
             #resultsTable::item {
                 padding: 8px;
-                border-bottom: 1px solid #3498db;
+                border-bottom: 1px solid #30363d;
             }
             
             #resultsTable::item:selected {
-                background: #3498db;
+                background: #7c3aed;
             }
             
             QHeaderView::section {
-                background: #2980b9;
-                color: white;
+                background: #6d28d9;
+                color: #f0f6fc;
                 padding: 10px;
-                border: 1px solid #3498db;
+                border: 1px solid #7c3aed;
                 font-weight: bold;
             }
             
             /* Progress Log */
             #progressLog {
-                background: #2c3e50;
-                color: #2ecc71;
-                border: 2px solid #3498db;
+                background: #0d1117;
+                color: #7c3aed;
+                border: 2px solid #7c3aed;
                 border-radius: 8px;
                 font-family: 'Courier New', monospace;
                 font-size: 11px;
@@ -1643,14 +1643,14 @@ class ModernScraperGUI(QMainWindow):
             
             /* Coming Soon */
             #comingSoon {
-                color: #bdc3c7;
+                color: #8b949e;
                 font-size: 18px;
                 font-style: italic;
             }
             
             /* Section Labels */
             #sectionLabel {
-                color: white;
+                color: #f0f6fc;
                 font-weight: bold;
                 font-size: 14px;
                 margin: 10px 0 5px 0;
@@ -1658,9 +1658,9 @@ class ModernScraperGUI(QMainWindow):
             
             /* Status Bar */
             QStatusBar {
-                background: #34495e;
-                color: white;
-                border-top: 1px solid #3498db;
+                background: #21262d;
+                color: #f0f6fc;
+                border-top: 1px solid #7c3aed;
             }
         """)
         
