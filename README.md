@@ -223,7 +223,7 @@ Then load this file using the "Load Keywords from File" button.
 You can modify the scraping behavior by editing the source code:
 
 - **Delay times**: Adjust `asyncio.sleep()` values
-- **Maximum results**: Change the limit in `business_links[:50]`
+- **Maximum results**: No limit - scrapes all available businesses
 - **Scroll behavior**: Modify `max_scrolls` in `_scroll_results_panel()`
 - **Selectors**: Update CSS selectors if Google changes their layout
 

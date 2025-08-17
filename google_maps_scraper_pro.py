@@ -145,7 +145,7 @@ class GoogleMapsScraper:
             if progress_callback:
                 progress_callback.emit("✅ Page loaded, waiting for content to stabilize...")
             
-            await asyncio.sleep(3)  # Give more time for dynamic content
+            await asyncio.sleep(1)  # Reduced wait time for dynamic content
             
             if progress_callback:
                 progress_callback.emit("⏳ Waiting for results to load...")
@@ -271,7 +271,7 @@ class GoogleMapsScraper:
                     }
                 """)
                 
-                await asyncio.sleep(random.uniform(1.5, 2.5))  # Longer wait for content to load
+                await asyncio.sleep(random.uniform(0.3, 0.8))  # Optimized wait for content to load
                 
                 # Count current business listings with improved detection
                 current_business_count = await self.page.evaluate("""
@@ -351,9 +351,9 @@ class GoogleMapsScraper:
                 progress_callback.emit(f"📊 Found {len(business_elements)} business listings to process")
             
             # Process each business by clicking and extracting detailed info
-            for i, element_info in enumerate(business_elements[:50]):  # Limit to 50 for performance
+            for i, element_info in enumerate(business_elements):  # Process all businesses found
                 if progress_callback:
-                    progress_callback.emit(f"🔄 Processing business {i+1}/{min(len(business_elements), 50)}")
+                    progress_callback.emit(f"🔄 Processing business {i+1}/{len(business_elements)}")
                 
                 try:
                     business_data = await self._extract_single_business(element_info, keyword, progress_callback)
@@ -367,8 +367,8 @@ class GoogleMapsScraper:
                         if progress_callback:
                             progress_callback.emit(f"✅ Extracted: {business_data.get('name', 'Unknown')}")
                     
-                    # Small delay between extractions
-                    await asyncio.sleep(random.uniform(0.5, 1.5))
+                    # Minimal delay between extractions for speed
+                    await asyncio.sleep(0.1)
                     
                 except Exception as e:
                     if progress_callback:
@@ -415,7 +415,7 @@ class GoogleMapsScraper:
                         visible_count = 0
                         processed_count = 0
                         
-                        for i, element in enumerate(elements[:50]):  # Limit to 50
+                        for i, element in enumerate(elements):  # Process all elements
                             try:
                                 processed_count += 1
                                 # Check if element is visible
@@ -974,8 +974,8 @@ class GoogleMapsScraper:
                     if progress_callback:
                         progress_callback.emit("✅ Business details panel loaded")
                     
-                    # Additional wait for content to stabilize
-                    await asyncio.sleep(1)
+                    # Reduced wait for content to stabilize
+                    await asyncio.sleep(0.3)
                     return True
                 except:
                     continue
@@ -989,7 +989,7 @@ class GoogleMapsScraper:
         except Exception as e:
             if progress_callback:
                 progress_callback.emit(f"⚠️ Error waiting for panel: {str(e)}")
-            await asyncio.sleep(2)  # Fallback wait
+            await asyncio.sleep(1)  # Reduced fallback wait
             return False
     
     async def close_browser(self):
@@ -1055,9 +1055,9 @@ class ScrapingThread(QThread):
                 
                 self.progress_signal.emit(f"📊 Found {len(results)} businesses for '{keyword}'")
                 
-                # Random delay between keywords
+                # Reduced delay between keywords for speed
                 if i < len(self.keywords) and self.is_running:
-                    delay = random.uniform(2, 4)
+                    delay = random.uniform(0.5, 1.5)
                     self.progress_signal.emit(f"⏱️ Waiting {delay:.1f} seconds before next keyword...")
                     await asyncio.sleep(delay)
             
