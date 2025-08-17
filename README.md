@@ -16,7 +16,7 @@
 
 ---
 
-## 🚀 Performance Highlights
+## 🚀 Performance Highlightss
 
 - ⚡ **3-5x Faster** than standard scrapers
 - 🎯 **80% Reduction** in scraping time
