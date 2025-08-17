@@ -214,39 +214,115 @@ class GoogleMapsScraper:
             if progress_callback:
                 progress_callback.emit("📜 Loading all results...")
                 
-            last_height = 0
+            last_business_count = 0
             scroll_attempts = 0
-            max_scrolls = 15
+            max_scrolls = 25  # Increased from 15
+            no_change_count = 0
             
             while scroll_attempts < max_scrolls:
-                # Scroll down in the results panel
+                # Scroll down in the results panel more aggressively with multiple selectors
                 await self.page.evaluate("""
                     () => {
-                        const resultsPanel = document.querySelector('[role="main"]');
-                        if (resultsPanel) {
-                            resultsPanel.scrollTop += 1000;
+                        // Try multiple selectors for the scrollable results panel
+                        const selectors = [
+                            '[role="main"]',
+                            '.m6QErb',
+                            '[data-value="Search results"]',
+                            '.Nv2PK',
+                            '.bJzME',
+                            '.lI9IFe',
+                            '[aria-label*="Results for"]',
+                            '.section-scrollbox',
+                            '.section-layout'
+                        ];
+                        
+                        let scrolled = false;
+                        for (const selector of selectors) {
+                            const panel = document.querySelector(selector);
+                            if (panel && panel.scrollHeight > panel.clientHeight) {
+                                panel.scrollTop += 2000;  // Aggressive scroll
+                                scrolled = true;
+                                console.log(`Scrolled using selector: ${selector}`);
+                                break;
+                            }
                         }
+                        
+                        // Also try scrolling the entire page as fallback
+                        window.scrollBy(0, 1000);
+                        
+                        // Try to click "Show more" or "Load more" buttons if they exist
+                        const moreButtons = [
+                            'button[aria-label*="more"]',
+                            'button[aria-label*="More"]',
+                            '.VfPpkd-LgbsSe[aria-label*="more"]',
+                            '[data-value="Show more results"]'
+                        ];
+                        
+                        for (const buttonSelector of moreButtons) {
+                            const button = document.querySelector(buttonSelector);
+                            if (button && button.offsetParent !== null) {
+                                button.click();
+                                console.log(`Clicked more button: ${buttonSelector}`);
+                                break;
+                            }
+                        }
+                        
+                        return scrolled;
                     }
                 """)
                 
-                await asyncio.sleep(random.uniform(1, 2))
+                await asyncio.sleep(random.uniform(1.5, 2.5))  # Longer wait for content to load
                 
-                # Check if new content loaded
-                current_height = await self.page.evaluate("""
+                # Count current business listings with improved detection
+                current_business_count = await self.page.evaluate("""
                     () => {
-                        const resultsPanel = document.querySelector('[role="main"]');
-                        return resultsPanel ? resultsPanel.scrollHeight : 0;
+                        const selectors = [
+                            'div[role="article"]',
+                            '.m6QErb',
+                            '[data-result-index]',
+                            '.Nv2PK',
+                            '.bJzME',
+                            '.lI9IFe',
+                            'a[data-cid]',
+                            '[jsaction*="pane.resultCard"]',
+                            '.section-result'
+                        ];
+                        
+                        let maxCount = 0;
+                        let bestSelector = '';
+                        for (const selector of selectors) {
+                            const elements = document.querySelectorAll(selector);
+                            if (elements.length > maxCount) {
+                                maxCount = elements.length;
+                                bestSelector = selector;
+                            }
+                        }
+                        
+                        console.log(`Best selector: ${bestSelector} found ${maxCount} businesses`);
+                        return maxCount;
                     }
                 """)
-                
-                if current_height == last_height:
-                    break
-                    
-                last_height = current_height
-                scroll_attempts += 1
                 
                 if progress_callback:
-                    progress_callback.emit(f"📜 Scrolling... ({scroll_attempts}/{max_scrolls})")
+                    progress_callback.emit(f"📜 Scrolling... ({scroll_attempts+1}/{max_scrolls}) - Found {current_business_count} businesses")
+                
+                # Check if we found new businesses
+                if current_business_count > last_business_count:
+                    last_business_count = current_business_count
+                    no_change_count = 0
+                else:
+                    no_change_count += 1
+                    
+                # Stop if no new businesses found for 3 consecutive attempts
+                if no_change_count >= 3:
+                    if progress_callback:
+                        progress_callback.emit(f"📜 Scrolling complete - No new businesses found after {no_change_count} attempts")
+                    break
+                    
+                scroll_attempts += 1
+                
+            if progress_callback:
+                progress_callback.emit(f"📜 Scrolling finished - Total businesses detected: {current_business_count}")
                     
         except Exception as e:
             if progress_callback:
@@ -603,10 +679,31 @@ class GoogleMapsScraper:
             # Extract phone number
             print("\n📞 Extracting business phone...")
             phone_selectors = [
+                # Primary phone selectors
                 '[data-item-id="phone"] .Io6YTe',
                 'button[data-value*="tel:"] .Io6YTe',
+                'a[href^="tel:"]',
                 '[data-attrid*="phone"]',
-                'a[href^="tel:"]'
+                # Additional comprehensive selectors
+                'button[jsaction*="phone"] .Io6YTe',
+                '.rogA2c button[data-value*="tel:"]',
+                '.CsEnBe[aria-label*="phone"]',
+                '.CsEnBe[aria-label*="Phone"]',
+                'button[aria-label*="phone"] .Io6YTe',
+                'button[aria-label*="Phone"] .Io6YTe',
+                '.Io6YTe[aria-label*="phone"]',
+                '.Io6YTe[aria-label*="Phone"]',
+                # Fallback selectors
+                'a[href*="tel:"]',
+                'span[aria-label*="phone"]',
+                'span[aria-label*="Phone"]',
+                # Generic phone pattern selectors
+                'button:has-text("+")',
+                'span:has-text("+")',
+                '.Io6YTe:has-text("+")',
+                # Contact section selectors
+                '[data-value="Call"] .Io6YTe',
+                'button[data-value="Call"] .Io6YTe'
             ]
             
             for i, selector in enumerate(phone_selectors, 1):
@@ -616,18 +713,50 @@ class GoogleMapsScraper:
                     if element:
                         text = await element.text_content()
                         href = await element.get_attribute('href')
+                        aria_label = await element.get_attribute('aria-label')
                         
-                        phone_text = text or (href.replace('tel:', '') if href and href.startswith('tel:') else '')
-                        print(f"   Raw phone text: '{phone_text}', href: '{href}'")
+                        # Try multiple sources for phone text
+                        phone_sources = [
+                            text,
+                            href.replace('tel:', '') if href and href.startswith('tel:') else '',
+                            aria_label
+                        ]
                         
-                        if phone_text and phone_text.strip():
+                        phone_text = ''
+                        for source in phone_sources:
+                            if source and source.strip():
+                                phone_text = source.strip()
+                                break
+                        
+                        print(f"   Raw phone text: '{phone_text}', href: '{href}', aria-label: '{aria_label}'")
+                        
+                        if phone_text:
                             import re
-                            if re.search(r'[0-9\-\(\)\+\s]+', phone_text):
-                                business_data['phone'] = phone_text.strip()
-                                print(f"   ✅ Found phone: '{business_data['phone']}'")
+                            # More comprehensive phone pattern matching
+                            phone_patterns = [
+                                r'\+?[0-9\s\-\(\)]{7,}',  # General phone pattern
+                                r'\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{1,4}[\s\-]?\d{1,9}',  # International
+                                r'\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}',  # US format
+                                r'\d{2,4}[\s\-]\d{3,4}[\s\-]\d{3,4}',  # General format
+                                r'[0-9\+\-\(\)\s]{7,}'  # Fallback pattern
+                            ]
+                            
+                            for pattern in phone_patterns:
+                                match = re.search(pattern, phone_text)
+                                if match:
+                                    found_phone = match.group(0).strip()
+                                    # Validate it has enough digits
+                                    digit_count = len(re.findall(r'\d', found_phone))
+                                    if digit_count >= 7:  # Minimum 7 digits for a valid phone
+                                        business_data['phone'] = found_phone
+                                        print(f"   ✅ Found phone: '{business_data['phone']}' (pattern: {pattern})")
+                                        break
+                            
+                            if business_data['phone']:
                                 break
                             else:
-                                print(f"   ⚠ Text found but doesn't match phone pattern")
+                                digit_count = len(re.findall(r'\d', phone_text))
+                                print(f"   ⚠ Text found but no valid phone pattern match (digits: {digit_count})")
                         else:
                             print(f"   ⚠ Element found but no phone text")
                     else:
@@ -636,8 +765,42 @@ class GoogleMapsScraper:
                     print(f"   ⚠ Error with selector: {e}")
                     continue
             
+            # Additional fallback: search for phone patterns in all visible text
             if not business_data['phone']:
-                print("   ❌ No business phone found with any selector")
+                print("   🔍 Fallback: Searching for phone patterns in all visible text...")
+                try:
+                    # Get all text content from the business details panel
+                    panel_text = await self.page.evaluate('''
+                        () => {
+                            const panel = document.querySelector('[role="main"]') || document.body;
+                            return panel.innerText || panel.textContent || '';
+                        }
+                    ''')
+                    
+                    if panel_text:
+                        import re
+                        # Look for phone patterns in the full text
+                        phone_patterns = [
+                            r'\+\d{1,3}[\s\-]?\(?\d{1,4}\)?[\s\-]?\d{1,4}[\s\-]?\d{1,9}',
+                            r'\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4}',
+                            r'\d{2,4}[\s\-]\d{3,4}[\s\-]\d{3,4}'
+                        ]
+                        
+                        for pattern in phone_patterns:
+                            matches = re.findall(pattern, panel_text)
+                            for match in matches:
+                                digit_count = len(re.findall(r'\d', match))
+                                if digit_count >= 7:
+                                    business_data['phone'] = match.strip()
+                                    print(f"   ✅ Found phone in text: '{business_data['phone']}'")
+                                    break
+                            if business_data['phone']:
+                                break
+                except Exception as e:
+                    print(f"   ⚠ Error in fallback phone search: {e}")
+            
+            if not business_data['phone']:
+                print("   ❌ No business phone found with any method")
             
             # Extract website
             print("\n🌐 Extracting business website...")
