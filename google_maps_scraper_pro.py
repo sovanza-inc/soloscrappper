@@ -1181,6 +1181,7 @@ class ModernScraperGUI(QMainWindow):
         
         # Create tabs
         self.create_dashboard_tab()
+        self.create_keywords_variation_tab()
         self.create_google_maps_tab()
         
         # Status bar
@@ -1353,6 +1354,348 @@ class ModernScraperGUI(QMainWindow):
         card_layout.addWidget(value_label)
         
         return card
+
+    def create_keywords_variation_tab(self):
+        """Create the keywords variation generator tab"""
+        tab = QWidget()
+        tab.setObjectName("keywordsVariationTab")
+        layout = QHBoxLayout(tab)
+        layout.setSpacing(8)
+        layout.setContentsMargins(8, 8, 8, 8)
+        
+        # Left panel - Input and controls
+        left_panel = QFrame()
+        left_panel.setObjectName("leftPanel")
+        left_panel.setFixedWidth(350)
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setSpacing(6)
+        left_layout.setContentsMargins(8, 8, 8, 8)
+        
+        # Title
+        title_label = QLabel("🔄 Keywords Generator")
+        title_label.setObjectName("sectionTitle")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setMaximumHeight(30)
+        left_layout.addWidget(title_label)
+        
+        # Base keyword input
+        base_keyword_label = QLabel("Base Keyword:")
+        base_keyword_label.setObjectName("sectionLabel")
+        left_layout.addWidget(base_keyword_label)
+        
+        self.base_keyword_input = QLineEdit()
+        self.base_keyword_input.setObjectName("baseKeywordInput")
+        self.base_keyword_input.setPlaceholderText("e.g., restaurants")
+        self.base_keyword_input.setMaximumHeight(30)
+        left_layout.addWidget(self.base_keyword_input)
+        
+        # Location Selection
+        location_label = QLabel("Location Selection:")
+        location_label.setObjectName("sectionLabel")
+        left_layout.addWidget(location_label)
+        
+        # Compact location selectors in a grid
+        location_grid = QGridLayout()
+        location_grid.setSpacing(4)
+        location_grid.setContentsMargins(0, 0, 0, 0)
+        
+        # Country/Region selector
+        country_label = QLabel("Country:")
+        country_label.setObjectName("inputLabel")
+        self.country_combo = QComboBox()
+        self.country_combo.setObjectName("countryCombo")
+        self.country_combo.addItems(["Select Country", "USA"])
+        self.country_combo.currentTextChanged.connect(self.on_country_changed)
+        self.country_combo.setMaximumHeight(28)
+        location_grid.addWidget(country_label, 0, 0)
+        location_grid.addWidget(self.country_combo, 0, 1)
+        
+        # State selector
+        state_label = QLabel("State:")
+        state_label.setObjectName("inputLabel")
+        self.state_combo = QComboBox()
+        self.state_combo.setObjectName("stateCombo")
+        self.state_combo.addItem("Select State")
+        self.state_combo.setEnabled(False)
+        self.state_combo.currentTextChanged.connect(self.on_state_changed)
+        self.state_combo.setMaximumHeight(28)
+        location_grid.addWidget(state_label, 1, 0)
+        location_grid.addWidget(self.state_combo, 1, 1)
+        
+        # City selector
+        city_label = QLabel("City:")
+        city_label.setObjectName("inputLabel")
+        self.city_combo = QComboBox()
+        self.city_combo.setObjectName("cityCombo")
+        self.city_combo.addItem("Select City")
+        self.city_combo.setEnabled(False)
+        self.city_combo.setMaximumHeight(28)
+        location_grid.addWidget(city_label, 2, 0)
+        location_grid.addWidget(self.city_combo, 2, 1)
+        
+        left_layout.addLayout(location_grid)
+        
+        # Additional location modifiers
+        additional_location_label = QLabel("Additional Location Modifiers:")
+        additional_location_label.setObjectName("sectionLabel")
+        left_layout.addWidget(additional_location_label)
+        
+        self.location_modifiers = QTextEdit()
+        self.location_modifiers.setObjectName("locationModifiers")
+        self.location_modifiers.setPlaceholderText("near me\ndowntown\nnearby\nin my area")
+        self.location_modifiers.setMaximumHeight(60)
+        left_layout.addWidget(self.location_modifiers)
+        
+        # Business type modifiers
+        business_type_label = QLabel("Business Type Modifiers:")
+        business_type_label.setObjectName("sectionLabel")
+        left_layout.addWidget(business_type_label)
+        
+        self.business_type_modifiers = QTextEdit()
+        self.business_type_modifiers.setObjectName("businessTypeModifiers")
+        self.business_type_modifiers.setPlaceholderText("best\ntop rated\ncheap\nexpensive\n24 hour\nopen now")
+        self.business_type_modifiers.setMaximumHeight(80)
+        left_layout.addWidget(self.business_type_modifiers)
+        
+        # Compact button layout
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(4)
+        
+        # Generate button
+        generate_btn = QPushButton("🚀 Generate")
+        generate_btn.setObjectName("generateBtn")
+        generate_btn.clicked.connect(self.generate_keyword_variations)
+        generate_btn.setMaximumHeight(32)
+        button_layout.addWidget(generate_btn)
+        
+        # Clear button
+        clear_btn = QPushButton("🗑️ Clear")
+        clear_btn.setObjectName("clearBtn")
+        clear_btn.clicked.connect(self.clear_keyword_variations)
+        clear_btn.setMaximumHeight(32)
+        button_layout.addWidget(clear_btn)
+        
+        left_layout.addLayout(button_layout)
+        
+        # Copy to scraper button
+        copy_btn = QPushButton("📋 Copy to Scraper")
+        copy_btn.setObjectName("copyBtn")
+        copy_btn.clicked.connect(self.copy_to_scraper)
+        copy_btn.setMaximumHeight(32)
+        left_layout.addWidget(copy_btn)
+        
+        left_layout.addStretch()
+        
+        # Right panel - Generated variations
+        right_panel = QFrame()
+        right_panel.setObjectName("rightPanel")
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.setSpacing(6)
+        right_layout.setContentsMargins(8, 8, 8, 8)
+        
+        # Compact header with count
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        variations_label = QLabel("Generated Variations:")
+        variations_label.setObjectName("sectionLabel")
+        header_layout.addWidget(variations_label)
+        
+        self.variations_count_label = QLabel("Count: 0")
+        self.variations_count_label.setObjectName("variationStatsLabel")
+        header_layout.addStretch()
+        header_layout.addWidget(self.variations_count_label)
+        
+        right_layout.addLayout(header_layout)
+        
+        self.variations_output = QTextEdit()
+        self.variations_output.setObjectName("variationsOutput")
+        self.variations_output.setReadOnly(True)
+        self.variations_output.setPlaceholderText("Generated keyword variations will appear here...")
+        right_layout.addWidget(self.variations_output)
+        
+        layout.addWidget(left_panel)
+        layout.addWidget(right_panel, 1)
+        
+        # Load location data
+        self.load_location_data()
+        
+        self.tab_widget.addTab(tab, "🔄 Keywords Generator")
+
+    def generate_keyword_variations(self):
+        """Generate keyword variations based on input"""
+        base_keyword = self.base_keyword_input.text().strip()
+        if not base_keyword:
+            QMessageBox.warning(self, "Error", "Please enter a base keyword")
+            return
+        
+        # Get selected locations
+        selected_locations = self.get_selected_locations()
+        
+        # Get additional location modifiers
+        additional_location_mods = [mod.strip() for mod in self.location_modifiers.toPlainText().split('\n') if mod.strip()]
+        
+        # Combine selected locations with additional modifiers
+        all_location_mods = selected_locations + additional_location_mods
+        
+        business_mods = [mod.strip() for mod in self.business_type_modifiers.toPlainText().split('\n') if mod.strip()]
+        
+        variations = []
+        
+        # Base keyword alone
+        variations.append(base_keyword)
+        
+        # Base keyword + location modifiers
+        for loc_mod in all_location_mods:
+            variations.append(f"{base_keyword} {loc_mod}")
+            variations.append(f"{base_keyword} in {loc_mod}")
+            variations.append(f"{base_keyword} near {loc_mod}")
+        
+        # Base keyword + business type modifiers
+        for bus_mod in business_mods:
+            variations.append(f"{bus_mod} {base_keyword}")
+        
+        # Combination: business type + base keyword + location
+        for bus_mod in business_mods:
+            for loc_mod in all_location_mods:
+                variations.append(f"{bus_mod} {base_keyword} {loc_mod}")
+                variations.append(f"{bus_mod} {base_keyword} in {loc_mod}")
+                variations.append(f"{bus_mod} {base_keyword} near {loc_mod}")
+        
+        # Remove duplicates while preserving order
+        unique_variations = []
+        seen = set()
+        for var in variations:
+            if var.lower() not in seen:
+                unique_variations.append(var)
+                seen.add(var.lower())
+        
+        # Display variations
+        self.variations_output.clear()
+        self.variations_output.setPlainText('\n'.join(unique_variations))
+        
+        # Update count
+        self.variations_count_label.setText(f"Count: {len(unique_variations)}")
+        
+        QMessageBox.information(self, "Success", f"Generated {len(unique_variations)} keyword variations!")
+    
+    def clear_keyword_variations(self):
+        """Clear all keyword variation inputs and outputs"""
+        self.base_keyword_input.clear()
+        self.location_modifiers.clear()
+        self.business_type_modifiers.clear()
+        self.variations_output.clear()
+        self.variations_count_label.setText("Count: 0")
+    
+    def copy_to_scraper(self):
+        """Copy generated variations to the scraper tab"""
+        variations_text = self.variations_output.toPlainText().strip()
+        if not variations_text:
+            QMessageBox.warning(self, "Error", "No variations to copy. Please generate variations first.")
+            return
+        
+        # Switch to Google Maps tab and populate keywords
+        self.tab_widget.setCurrentIndex(2)  # Google Maps tab is now index 2
+        self.keywords_text.setPlainText(variations_text)
+        
+        QMessageBox.information(self, "Success", "Keyword variations copied to scraper!")
+    
+    def load_location_data(self):
+        """Load location data from locationslist.txt"""
+        self.location_data = {}
+        try:
+            with open('locationslist.txt', 'r', encoding='utf-8') as file:
+                current_state = None
+                for line in file:
+                    line = line.strip()
+                    
+                    if line and not line.startswith('*'):
+                        # This is a state
+                        current_state = line
+                        self.location_data[current_state] = []
+                    elif line.startswith('*') and current_state:
+                        # This is a city
+                        city = line[1:].strip()  # Remove the asterisk
+                        self.location_data[current_state].append(city)
+                        
+            print(f"Loaded {len(self.location_data)} states with location data")
+        except FileNotFoundError:
+            print("ERROR: locationslist.txt file not found!")
+            QMessageBox.warning(self, "Warning", "locationslist.txt file not found. Location selection will be limited.")
+            self.location_data = {}
+        except Exception as e:
+            print(f"ERROR loading location data: {e}")
+            self.location_data = {}
+    
+    def on_country_changed(self, country):
+        """Handle country selection change"""
+        self.state_combo.clear()
+        self.city_combo.clear()
+        self.city_combo.addItem("Select City")
+        self.city_combo.setEnabled(False)
+        
+        if country == "USA" and self.location_data:
+            self.state_combo.addItem("All States")
+            self.state_combo.addItems(sorted(self.location_data.keys()))
+            self.state_combo.setEnabled(True)
+        else:
+            self.state_combo.addItem("Select State")
+            self.state_combo.setEnabled(False)
+    
+    def on_state_changed(self, state):
+        """Handle state selection change"""
+        self.city_combo.clear()
+        
+        if state == "All States":
+            self.city_combo.addItem("All Cities")
+            # Add all cities from all states
+            all_cities = []
+            for cities in self.location_data.values():
+                all_cities.extend(cities)
+            unique_cities = sorted(set(all_cities))
+            self.city_combo.addItems(unique_cities)
+            self.city_combo.setEnabled(True)
+        elif state in self.location_data:
+            cities_in_state = self.location_data[state]
+            self.city_combo.addItem("All Cities in " + state)
+            self.city_combo.addItems(sorted(cities_in_state))
+            self.city_combo.setEnabled(True)
+        else:
+            self.city_combo.addItem("Select City")
+            self.city_combo.setEnabled(False)
+    
+    def get_selected_locations(self):
+        """Get selected locations from dropdown menus"""
+        locations = []
+        
+        country = self.country_combo.currentText()
+        state = self.state_combo.currentText()
+        city = self.city_combo.currentText()
+        
+        if country == "USA":
+            if state == "All States":
+                # Add all states
+                locations.extend(list(self.location_data.keys()))
+                
+                if city == "All Cities":
+                    # Add all cities from all states
+                    for cities in self.location_data.values():
+                        locations.extend(cities)
+                elif city != "Select City":
+                    # Add specific city
+                    locations.append(city)
+                    
+            elif state in self.location_data:
+                # Add specific state
+                locations.append(state)
+                
+                if city == f"All Cities in {state}":
+                    # Add all cities in the selected state
+                    locations.extend(self.location_data[state])
+                elif city != "Select City" and city in self.location_data[state]:
+                    # Add specific city
+                    locations.append(city)
+        
+        return locations
 
     def create_google_maps_tab(self):
         """Create the main scraper tab"""
@@ -1721,6 +2064,124 @@ class ModernScraperGUI(QMainWindow):
                 font-weight: bold;
                 font-size: 14px;
                 margin: 10px 0 5px 0;
+            }
+            
+            #inputLabel {
+                color: #f0f6fc;
+                font-weight: bold;
+                font-size: 11px;
+                margin: 2px 0;
+                min-width: 60px;
+            }
+            
+            /* Keywords Variation Generator */
+            #keywordVariationTab {
+                background: #0d1117;
+                color: #f0f6fc;
+            }
+            
+            #baseKeywordInput, #locationModifiersInput, #businessTypeModifiersInput {
+                background: #21262d;
+                border: 2px solid #7c3aed;
+                border-radius: 8px;
+                color: #f0f6fc;
+                font-size: 12px;
+                padding: 10px;
+                margin: 5px 0;
+            }
+            
+            #countryCombo, #stateCombo, #cityCombo {
+                background: #21262d;
+                border: 2px solid #7c3aed;
+                border-radius: 8px;
+                color: #f0f6fc;
+                font-size: 12px;
+                padding: 8px;
+                margin: 5px 0;
+                min-height: 20px;
+            }
+            
+            #countryCombo::drop-down, #stateCombo::drop-down, #cityCombo::drop-down {
+                border: none;
+                background: #7c3aed;
+                border-radius: 4px;
+            }
+            
+            #countryCombo::down-arrow, #stateCombo::down-arrow, #cityCombo::down-arrow {
+                image: none;
+                border: none;
+                width: 12px;
+                height: 12px;
+                background: #f0f6fc;
+            }
+            
+            #countryCombo QAbstractItemView, #stateCombo QAbstractItemView, #cityCombo QAbstractItemView {
+                background: #21262d;
+                border: 2px solid #7c3aed;
+                color: #f0f6fc;
+                selection-background-color: #7c3aed;
+                selection-color: #f0f6fc;
+            }
+            
+            #generateBtn {
+                background: #238636;
+                color: #f0f6fc;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 5px;
+            }
+            
+            #generateBtn:hover {
+                background: #2ea043;
+            }
+            
+            #clearVariationsBtn {
+                background: #da3633;
+                color: #f0f6fc;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-weight: bold;
+                margin: 5px;
+            }
+            
+            #clearVariationsBtn:hover {
+                background: #f85149;
+            }
+            
+            #copyToScraperBtn {
+                background: #7c3aed;
+                color: #f0f6fc;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-weight: bold;
+                margin: 5px;
+            }
+            
+            #copyToScraperBtn:hover {
+                background: #6d28d9;
+            }
+            
+            #variationsDisplay {
+                background: #21262d;
+                border: 2px solid #7c3aed;
+                border-radius: 8px;
+                color: #f0f6fc;
+                font-family: 'Courier New', monospace;
+                font-size: 11px;
+                padding: 10px;
+                margin: 10px 0;
+            }
+            
+            #variationCountLabel {
+                color: #7c3aed;
+                font-weight: bold;
+                font-size: 14px;
+                margin: 10px 0;
             }
             
             /* Status Bar */
