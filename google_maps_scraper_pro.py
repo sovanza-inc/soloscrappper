@@ -1209,43 +1209,13 @@ class ModernScraperGUI(QMainWindow):
         self.keywords_text.setMaximumHeight(200)
         left_layout.addWidget(self.keywords_text)
         
-        # Stats section
-        stats_frame = QFrame()
-        stats_frame.setObjectName("statsFrame")
-        stats_layout = QVBoxLayout(stats_frame)
-        
-        leads_label = QLabel("Leads Scraped:")
-        leads_label.setObjectName("statsLabel")
-        self.leads_count = QLabel("0")
-        self.leads_count.setObjectName("statsNumber")
-        
-        keyword_label = QLabel("Current Keyword: None")
-        keyword_label.setObjectName("currentKeyword")
-        self.current_keyword_label = keyword_label
-        
-        stats_layout.addWidget(leads_label)
-        stats_layout.addWidget(self.leads_count)
-        stats_layout.addWidget(keyword_label)
-        
-        left_layout.addWidget(stats_frame)
+        # Removed stats section for cleaner interface
         
         # Control buttons
         self.create_control_buttons(left_layout)
         
-        # Business totals
-        totals_frame = QFrame()
-        totals_frame.setObjectName("totalsFrame")
-        totals_layout = QVBoxLayout(totals_frame)
+        # Removed business totals section for cleaner interface
         
-        self.total_label = QLabel("TOTAL Businesses: 0")
-        self.total_label.setObjectName("totalLabel")
-        self.unique_label = QLabel("UNIQUE Businesses: 0")
-        self.unique_label.setObjectName("uniqueLabel")
-        
-        totals_layout.addWidget(self.total_label)
-        totals_layout.addWidget(self.unique_label)
-        
-        left_layout.addWidget(totals_frame)
         left_layout.addStretch()
         
         # Right panel - Results table
@@ -1475,33 +1445,7 @@ class ModernScraperGUI(QMainWindow):
                 padding: 10px;
             }
             
-            /* Stats Frame */
-            #statsFrame {
-                background: rgba(124, 58, 237, 0.1);
-                border: 2px solid #7c3aed;
-                border-radius: 10px;
-                padding: 10px;
-                margin: 10px 0;
-            }
-            
-            #statsLabel {
-                color: #7c3aed;
-                font-weight: bold;
-                font-size: 14px;
-            }
-            
-            #statsNumber {
-                color: #f0f6fc;
-                font-size: 24px;
-                font-weight: bold;
-                text-align: center;
-            }
-            
-            #currentKeyword {
-                color: #f85149;
-                font-size: 12px;
-                font-style: italic;
-            }
+            /* Removed stats frame styling for cleaner interface */
             
             /* Control Buttons */
             #scrapeBtn {
@@ -1581,21 +1525,7 @@ class ModernScraperGUI(QMainWindow):
                 margin: 2px 0;
             }
             
-            /* Totals Frame */
-            #totalsFrame {
-                background: rgba(124, 58, 237, 0.1);
-                border: 2px solid #7c3aed;
-                border-radius: 10px;
-                padding: 10px;
-                margin: 10px 0;
-            }
-            
-            #totalLabel, #uniqueLabel {
-                color: #7c3aed;
-                font-weight: bold;
-                font-size: 14px;
-                margin: 5px 0;
-            }
+            /* Removed totals frame styling for cleaner interface */
             
             /* Results Table */
             #resultsFrame {
@@ -1810,7 +1740,7 @@ class ModernScraperGUI(QMainWindow):
         
         # Update stats
         self.total_businesses = len(self.scraped_businesses)
-        self.leads_count.setText(str(self.total_businesses))
+        # Removed leads count display for cleaner interface
         
         # Calculate unique businesses
         seen = set()
@@ -1826,17 +1756,18 @@ class ModernScraperGUI(QMainWindow):
         
     def update_stats(self):
         """Update statistics display"""
-        self.total_label.setText(f"TOTAL Businesses: {self.total_businesses}")
-        self.unique_label.setText(f"UNIQUE Businesses: {self.unique_businesses}")
+        # Removed business totals display for cleaner interface
+        pass
         
     def update_current_keyword(self, keyword: str):
         """Update the current keyword display"""
-        self.current_keyword_label.setText(f"Current Keyword: {keyword}")
+        # Removed current keyword display for cleaner interface
+        pass
         
     def scraping_finished(self, result_count):
         """Handle scraping completion"""
         self.log_progress(f"🎉 Scraping completed! Total businesses found: {result_count}")
-        self.current_keyword_label.setText("Current Keyword: Completed")
+        # Removed current keyword display for cleaner interface
         
         if result_count > 0:
             QMessageBox.information(
