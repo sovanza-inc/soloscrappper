@@ -1,4 +1,4 @@
-# 🗺️ Google Maps Scraper - Ultra-Fast Business Data Extractor
+# �️ Google Maps Scraper - Ultra-Fast Business Data Extractor
 
 <div align="center">
 

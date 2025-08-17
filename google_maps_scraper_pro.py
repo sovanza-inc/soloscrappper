@@ -113,8 +113,39 @@ class GoogleMapsScraper:
             if progress_callback:
                 progress_callback.emit(f"🌐 Navigating to: {search_url}")
             
-            await self.page.goto(search_url, wait_until="networkidle", timeout=30000)
-            await asyncio.sleep(2)
+            # Use more lenient navigation settings for Google Maps
+            if progress_callback:
+                progress_callback.emit("🔄 Starting navigation to Google Maps...")
+            
+            # Try navigation with fallback strategies
+            navigation_success = False
+            for attempt in range(2):
+                try:
+                    if attempt == 0:
+                        await self.page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
+                    else:
+                        # Fallback: try with load event instead
+                        if progress_callback:
+                            progress_callback.emit("🔄 Retrying with different loading strategy...")
+                        await self.page.goto(search_url, wait_until="load", timeout=45000)
+                    
+                    navigation_success = True
+                    break
+                except Exception as nav_error:
+                    if attempt == 0:
+                        if progress_callback:
+                            progress_callback.emit(f"⚠ First navigation attempt failed: {str(nav_error)}")
+                        continue
+                    else:
+                        raise nav_error
+            
+            if not navigation_success:
+                raise Exception("Failed to navigate to Google Maps after multiple attempts")
+            
+            if progress_callback:
+                progress_callback.emit("✅ Page loaded, waiting for content to stabilize...")
+            
+            await asyncio.sleep(3)  # Give more time for dynamic content
             
             if progress_callback:
                 progress_callback.emit("⏳ Waiting for results to load...")
@@ -124,23 +155,35 @@ class GoogleMapsScraper:
                 '[role="main"]',
                 '.m6QErb',
                 '[data-result-index]',
-                'div[role="article"]'
+                'div[role="article"]',
+                '.Nv2PK',  # Additional Google Maps selectors
+                '.bJzME',
+                '.lI9IFe'
             ]
             
+            if progress_callback:
+                progress_callback.emit(f"🔍 Trying {len(selectors_to_try)} different selectors to detect results...")
+            
             results_found = False
-            for selector in selectors_to_try:
+            for i, selector in enumerate(selectors_to_try):
                 try:
-                    await self.page.wait_for_selector(selector, timeout=10000)
+                    if progress_callback:
+                        progress_callback.emit(f"🔍 Attempting selector {i+1}/{len(selectors_to_try)}: {selector}")
+                    
+                    await self.page.wait_for_selector(selector, timeout=8000)
                     results_found = True
                     if progress_callback:
                         progress_callback.emit(f"✅ Found results with selector: {selector}")
                     break
-                except:
+                except Exception as selector_error:
+                    if progress_callback:
+                        progress_callback.emit(f"❌ Selector {selector} failed: {str(selector_error)[:50]}...")
                     continue
             
             if not results_found:
                 if progress_callback:
-                    progress_callback.emit(f"❌ No results found for: {keyword}")
+                    progress_callback.emit(f"❌ No results found for: {keyword} - All selectors failed")
+                    progress_callback.emit(f"🔍 This might indicate: 1) No search results 2) Page didn't load properly 3) Google Maps changed their layout")
                 return []
             
             # Scroll to load all results
@@ -155,8 +198,14 @@ class GoogleMapsScraper:
             return businesses
             
         except Exception as e:
-            if progress_callback:
-                progress_callback.emit(f"❌ Error searching {keyword}: {str(e)}")
+            error_msg = str(e)
+            if "Timeout" in error_msg:
+                if progress_callback:
+                    progress_callback.emit(f"⏰ Navigation timeout for {keyword}. This might be due to slow internet or Google Maps loading issues.")
+                    progress_callback.emit(f"💡 Try: 1) Check internet connection 2) Wait a moment and retry 3) Use a different search term")
+            else:
+                if progress_callback:
+                    progress_callback.emit(f"❌ Error searching {keyword}: {error_msg}")
             return []
     
     async def _scroll_results_panel(self, progress_callback=None):
@@ -204,171 +253,581 @@ class GoogleMapsScraper:
                 progress_callback.emit(f"❌ Error during scrolling: {str(e)}")
     
     async def _extract_business_listings_fast(self, keyword: str, progress_callback=None, business_callback=None) -> List[Dict[str, str]]:
-        """Extract business information using improved method with better selectors"""
+        """Extract business information using resilient multi-strategy approach"""
         businesses = []
         
         try:
             if progress_callback:
-                progress_callback.emit("⚡ Extracting businesses with improved selectors...")
+                progress_callback.emit("🔍 Using resilient extraction with click-through method...")
             
             # Wait for content to be fully loaded
             await asyncio.sleep(3)
             
-            # Use improved extraction with multiple strategies
-            businesses_data = await self.page.evaluate("""
-                () => {
-                    const businesses = [];
-                    
-                    // Try multiple selectors for business elements
-                    const selectors = [
-                        'div[role="article"]',
-                        'div[jsaction*="pane.selectResult"]',
-                        'a[data-cid]',
-                        '.hfpxzc',
-                        '[data-result-index]',
-                        '.Nv2PK'
-                    ];
-                    
-                    let businessElements = [];
-                    for (const selector of selectors) {
-                        businessElements = document.querySelectorAll(selector);
-                        if (businessElements.length > 0) {
-                            console.log(`Found ${businessElements.length} businesses with selector: ${selector}`);
-                            break;
-                        }
-                    }
-                    
-                    businessElements.forEach((element, index) => {
-                        if (index >= 100) return; // Limit to 100 results
-                        
-                        const business = {
-                            name: '',
-                            address: '',
-                            phone: '',
-                            website: '',
-                            rating: '',
-                            reviews: '',
-                            category: ''
-                        };
-                        
-                        try {
-                            // Extract name with multiple selectors
-                            const nameSelectors = [
-                                '.DUwDvf.lfPIob',
-                                'div[class*="fontHeadline"]',
-                                'h3',
-                                '.qBF1Pd',
-                                '.dbg0pd div'
-                            ];
-                            
-                            for (const sel of nameSelectors) {
-                                const nameEl = element.querySelector(sel);
-                                if (nameEl && nameEl.textContent.trim()) {
-                                    business.name = nameEl.textContent.trim();
-                                    break;
-                                }
-                            }
-                            
-                            // Extract address with multiple selectors
-                            const addrSelectors = [
-                                '.W4Efsd:last-child .W4Efsd',
-                                '[data-value="Directions"]',
-                                '.W4Efsd[data-value="Directions"]',
-                                '.rogA2c .W4Efsd:last-child'
-                            ];
-                            
-                            for (const sel of addrSelectors) {
-                                const addrEl = element.querySelector(sel);
-                                if (addrEl && addrEl.textContent.trim()) {
-                                    business.address = addrEl.textContent.trim();
-                                    break;
-                                }
-                            }
-                            
-                            // Extract rating
-                            const ratingEl = element.querySelector('span.MW4etd, span[role="img"][aria-label*="star"]');
-                            if (ratingEl) {
-                                const ariaLabel = ratingEl.getAttribute('aria-label');
-                                if (ariaLabel) {
-                                    const match = ariaLabel.match(/([0-9.]+)/);
-                                    if (match) business.rating = match[1];
-                                } else {
-                                    const ratingText = ratingEl.textContent.trim();
-                                    const match = ratingText.match(/([0-9.]+)/);
-                                    if (match) business.rating = match[1];
-                                }
-                            }
-                            
-                            // Extract reviews count
-                            const reviewSelectors = [
-                                '.UY7F9',
-                                'span.RDApEe.YrbPuc',
-                                'span[aria-label*="review"]'
-                            ];
-                            
-                            for (const sel of reviewSelectors) {
-                                const reviewEl = element.querySelector(sel);
-                                if (reviewEl) {
-                                    const reviewText = reviewEl.textContent || reviewEl.getAttribute('aria-label') || '';
-                                    const match = reviewText.match(/([0-9,]+)/);
-                                    if (match) {
-                                        business.reviews = match[1];
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            // Extract category
-                            const catSelectors = [
-                                '.W4Efsd:first-child .W4Efsd',
-                                '.DkEaL',
-                                'span.DkEaL'
-                            ];
-                            
-                            for (const sel of catSelectors) {
-                                const catEl = element.querySelector(sel);
-                                if (catEl && catEl.textContent.trim()) {
-                                    business.category = catEl.textContent.trim();
-                                    break;
-                                }
-                            }
-                            
-                        } catch (e) {
-                            console.log('Error extracting business data:', e);
-                        }
-                        
-                        // Only add if we have at least a name
-                        if (business.name && business.name.length > 1) {
-                            businesses.push(business);
-                        }
-                    });
-                    
-                    return businesses;
-                }
-            """);
+            # Get all business listing elements using multiple strategies
+            business_elements = await self._get_business_elements()
+            
+            if not business_elements:
+                if progress_callback:
+                    progress_callback.emit("❌ No business elements found")
+                return []
             
             if progress_callback:
-                progress_callback.emit(f"📊 Found {len(businesses_data)} businesses in total")
+                progress_callback.emit(f"📊 Found {len(business_elements)} business listings to process")
             
-            # Process extracted data with real-time updates
-            for i, business_data in enumerate(businesses_data):
-                business_data['keyword'] = keyword
-                businesses.append(business_data)
-                
+            # Process each business by clicking and extracting detailed info
+            for i, element_info in enumerate(business_elements[:50]):  # Limit to 50 for performance
                 if progress_callback:
-                    progress_callback.emit(f"✅ Extracted: {business_data.get('name', 'Unknown')} ({i+1}/{len(businesses_data)})")
+                    progress_callback.emit(f"🔄 Processing business {i+1}/{min(len(business_elements), 50)}")
                 
-                if business_callback:
-                    business_callback.emit(business_data)
-                
-                # Small delay to make updates visible
-                await asyncio.sleep(0.1)
+                try:
+                    business_data = await self._extract_single_business(element_info, keyword, progress_callback)
+                    
+                    if business_data and business_data.get('name'):
+                        businesses.append(business_data)
+                        
+                        if business_callback:
+                            business_callback.emit(business_data)
+                        
+                        if progress_callback:
+                            progress_callback.emit(f"✅ Extracted: {business_data.get('name', 'Unknown')}")
+                    
+                    # Small delay between extractions
+                    await asyncio.sleep(random.uniform(0.5, 1.5))
+                    
+                except Exception as e:
+                    if progress_callback:
+                        progress_callback.emit(f"⚠️ Error processing business {i+1}: {str(e)}")
+                    continue
                     
         except Exception as e:
             if progress_callback:
-                progress_callback.emit(f"❌ Error extracting listings: {str(e)}")
+                progress_callback.emit(f"❌ Error in extraction process: {str(e)}")
         
         return businesses
+    
+    async def _get_business_elements(self):
+        """Get business elements using Playwright's native element detection"""
+        print("\n=== Starting business element detection ===")
+        try:
+            # Wait for results to load
+            print("Waiting for main content to load...")
+            await self.page.wait_for_selector('[role="main"]', timeout=10000)
+            print("✓ Main content loaded successfully")
+            
+            # Multiple selectors for business listings - prioritized by reliability
+            selectors = [
+                'a[data-cid]',  # Most reliable - has business ID
+                '.hfpxzc',  # Common business link class
+                'a[href*="/maps/place/"]',  # Direct place links
+                'div[role="article"] a',  # Article containers with links
+                'div[jsaction*="selectResult"]',  # Elements with select action
+                '[data-result-index] a',  # Indexed results
+                'div[role="article"]'  # Fallback to article containers
+            ]
+            
+            business_elements = []
+            print(f"Trying {len(selectors)} different selectors...")
+            
+            for idx, selector in enumerate(selectors, 1):
+                print(f"\n[{idx}/{len(selectors)}] Trying selector: '{selector}'")
+                try:
+                    # Use Playwright's native element detection
+                    elements = await self.page.query_selector_all(selector)
+                    
+                    if elements:
+                        print(f"  ✓ Found {len(elements)} elements")
+                        visible_count = 0
+                        processed_count = 0
+                        
+                        for i, element in enumerate(elements[:50]):  # Limit to 50
+                            try:
+                                processed_count += 1
+                                # Check if element is visible
+                                is_visible = await element.is_visible()
+                                
+                                if is_visible:
+                                    visible_count += 1
+                                    # Get element text for identification
+                                    text_content = await element.text_content()
+                                    href = await element.get_attribute('href')
+                                    data_cid = await element.get_attribute('data-cid')
+                                    
+                                    element_info = {
+                                        'element': element,
+                                        'selector': selector,
+                                        'index': i,
+                                        'text': (text_content or '').strip()[:100],
+                                        'href': href or '',
+                                        'has_data_cid': bool(data_cid)
+                                    }
+                                    
+                                    business_elements.append(element_info)
+                                    
+                                    # Log first few elements for debugging
+                                    if len(business_elements) <= 3:
+                                        print(f"    [{len(business_elements)}] Text: '{element_info['text'][:50]}{'...' if len(element_info['text']) > 50 else ''}'")
+                                        print(f"        Has data-cid: {element_info['has_data_cid']}, Has href: {bool(element_info['href'])}")
+                                        
+                            except Exception as e:
+                                print(f"    ⚠ Error processing element {i}: {e}")
+                                continue
+                        
+                        print(f"  → Processed {processed_count} elements, {visible_count} visible, {len(business_elements)} valid")
+                        
+                        if business_elements:
+                            print(f"  ✓ Successfully found {len(business_elements)} business elements with selector '{selector}'")
+                            break  # Use first successful strategy
+                    else:
+                        print(f"  ✗ No elements found")
+                            
+                except Exception as e:
+                    print(f"  ✗ Error with selector '{selector}': {e}")
+                    continue
+            
+            print(f"\n=== Element detection complete: {len(business_elements)} businesses found ===")
+            return business_elements
+            
+        except Exception as e:
+            print(f"✗ Critical error getting business elements: {e}")
+            return []
+    
+    async def _extract_single_business(self, element_info, keyword, progress_callback=None):
+        """Extract detailed information for a single business by clicking on it"""
+        try:
+            # Click on the business element
+            click_success = await self._click_business_element(element_info)
+            
+            if not click_success:
+                if progress_callback:
+                    progress_callback.emit(f"⚠️ Failed to click on business: {element_info.get('text', 'Unknown')}")
+                return None
+            
+            # Wait for details panel to load with better detection
+            await self._wait_for_business_panel(progress_callback)
+            
+            # Extract detailed information from the side panel using Playwright methods
+            if progress_callback:
+                progress_callback.emit("🔍 Extracting business data...")
+            
+            business_data = await self._extract_business_data_native()
+            
+            if progress_callback:
+                progress_callback.emit(f"📊 Raw extracted data: {business_data}")
+            
+            # Add keyword to the data
+            if business_data:
+                business_data['keyword'] = keyword
+                
+                if progress_callback:
+                    progress_callback.emit(f"✅ Successfully extracted: {business_data.get('name', 'Unknown')}")
+                    
+                return business_data
+            else:
+                if progress_callback:
+                    progress_callback.emit("⚠️ No business data extracted")
+                return None
+            
+        except Exception as e:
+            if progress_callback:
+                progress_callback.emit(f"⚠️ Error extracting business details: {str(e)}")
+            return None
+    
+    async def _click_business_element(self, element_info):
+        """Click on a business element using Playwright's native click"""
+        business_text = element_info.get('text', 'Unknown')[:50]
+        print(f"\n🖱️  Attempting to click business: '{business_text}'")
+        print(f"   Selector: {element_info.get('selector', 'N/A')}")
+        print(f"   Index: {element_info.get('index', 'N/A')}")
+        print(f"   Has data-cid: {element_info.get('has_data_cid', False)}")
+        
+        try:
+            element = element_info['element']
+            
+            # Check if element is still attached to DOM
+            try:
+                is_attached = await element.evaluate('el => el.isConnected')
+                if not is_attached:
+                    print(f"   ✗ Element is no longer attached to DOM")
+                    return False
+            except Exception as attach_error:
+                print(f"   ⚠ Could not check element attachment: {attach_error}")
+            
+            # Ensure element is still visible
+            is_visible = await element.is_visible()
+            print(f"   Visibility check: {'✓ Visible' if is_visible else '✗ Not visible'}")
+            
+            if is_visible:
+                # Get element position for debugging
+                try:
+                    bbox = await element.bounding_box()
+                    if bbox:
+                        print(f"   Position: x={bbox['x']:.1f}, y={bbox['y']:.1f}, w={bbox['width']:.1f}, h={bbox['height']:.1f}")
+                    else:
+                        print(f"   ⚠ Could not get element bounding box")
+                except Exception as bbox_error:
+                    print(f"   ⚠ Error getting bounding box: {bbox_error}")
+                
+                # Scroll element into view if needed
+                print(f"   📜 Scrolling element into view...")
+                await element.scroll_into_view_if_needed()
+                
+                # Wait a moment for any animations
+                await asyncio.sleep(0.5)
+                
+                # Use Playwright's native click with force option
+                print(f"   🎯 Executing click...")
+                await element.click(force=True)
+                
+                print(f"   ✅ Click successful!")
+                return True
+            else:
+                print(f"   ✗ Element not visible, cannot click")
+                return False
+                
+        except Exception as e:
+            print(f"   ✗ Primary click failed: {e}")
+            
+            # Fallback: try clicking by selector
+            print(f"   🔄 Attempting fallback click by selector...")
+            try:
+                selector = element_info['selector']
+                index = element_info['index']
+                
+                print(f"   Fallback selector: '{selector}', index: {index}")
+                
+                # Try to find and click the element by selector
+                elements = await self.page.query_selector_all(selector)
+                print(f"   Found {len(elements)} elements with fallback selector")
+                
+                if index < len(elements):
+                    fallback_element = elements[index]
+                    is_fallback_visible = await fallback_element.is_visible()
+                    print(f"   Fallback element visible: {is_fallback_visible}")
+                    
+                    if is_fallback_visible:
+                        await fallback_element.scroll_into_view_if_needed()
+                        await asyncio.sleep(0.3)
+                        await fallback_element.click(force=True)
+                        print(f"   ✅ Fallback click successful!")
+                        return True
+                    else:
+                        print(f"   ✗ Fallback element not visible")
+                else:
+                    print(f"   ✗ Index {index} out of range for fallback elements")
+                    
+            except Exception as fallback_error:
+                print(f"   ✗ Fallback click also failed: {fallback_error}")
+                
+            print(f"   ❌ All click attempts failed")
+            return False
+    
+    async def _extract_business_data_native(self):
+        """Extract business data using Playwright's native methods"""
+        print("\n📊 Starting business data extraction...")
+        
+        business_data = {
+            'name': '',
+            'address': '',
+            'phone': '',
+            'website': '',
+            'rating': '',
+            'reviews': '',
+            'category': ''
+        }
+        
+        try:
+            # Extract name - multiple strategies
+            print("\n🏢 Extracting business name...")
+            name_selectors = [
+                'h1[data-attrid="title"]',
+                'h1.DUwDvf',
+                '.x3AX1-LfntMc-header-title h1',
+                '[data-attrid="title"]',
+                'h1',
+                '.qBF1Pd.fontHeadlineSmall'
+            ]
+            
+            for i, selector in enumerate(name_selectors, 1):
+                print(f"   [{i}/{len(name_selectors)}] Trying name selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        if text and text.strip():
+                            business_data['name'] = text.strip()
+                            print(f"   ✅ Found name: '{business_data['name']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Element found but no text content")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['name']:
+                print("   ❌ No business name found with any selector")
+            
+            # Extract address
+            print("\n📍 Extracting business address...")
+            address_selectors = [
+                '[data-item-id="address"] .Io6YTe',
+                '[data-attrid="kc:/location/location:address"]',
+                '.LrzXr',
+                '[data-value="Directions"]',
+                'button[data-value="Directions"] .Io6YTe',
+                '.rogA2c .Io6YTe'
+            ]
+            
+            for i, selector in enumerate(address_selectors, 1):
+                print(f"   [{i}/{len(address_selectors)}] Trying address selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        if text and text.strip():
+                            business_data['address'] = text.strip()
+                            print(f"   ✅ Found address: '{business_data['address']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Element found but no text content")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['address']:
+                print("   ❌ No business address found with any selector")
+            
+            # Extract phone number
+            print("\n📞 Extracting business phone...")
+            phone_selectors = [
+                '[data-item-id="phone"] .Io6YTe',
+                'button[data-value*="tel:"] .Io6YTe',
+                '[data-attrid*="phone"]',
+                'a[href^="tel:"]'
+            ]
+            
+            for i, selector in enumerate(phone_selectors, 1):
+                print(f"   [{i}/{len(phone_selectors)}] Trying phone selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        href = await element.get_attribute('href')
+                        
+                        phone_text = text or (href.replace('tel:', '') if href and href.startswith('tel:') else '')
+                        print(f"   Raw phone text: '{phone_text}', href: '{href}'")
+                        
+                        if phone_text and phone_text.strip():
+                            import re
+                            if re.search(r'[0-9\-\(\)\+\s]+', phone_text):
+                                business_data['phone'] = phone_text.strip()
+                                print(f"   ✅ Found phone: '{business_data['phone']}'")
+                                break
+                            else:
+                                print(f"   ⚠ Text found but doesn't match phone pattern")
+                        else:
+                            print(f"   ⚠ Element found but no phone text")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['phone']:
+                print("   ❌ No business phone found with any selector")
+            
+            # Extract website
+            print("\n🌐 Extracting business website...")
+            website_selectors = [
+                '[data-item-id="authority"] a',
+                'a[data-value="Website"]',
+                'a[href^="http"]:not([href*="google.com"]):not([href*="maps"])',
+                '[data-attrid*="website"] a'
+            ]
+            
+            for i, selector in enumerate(website_selectors, 1):
+                print(f"   [{i}/{len(website_selectors)}] Trying website selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        href = await element.get_attribute('href')
+                        print(f"   Found href: '{href}'")
+                        if href and 'google.com' not in href and 'maps' not in href:
+                            business_data['website'] = href
+                            print(f"   ✅ Found website: '{business_data['website']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Href found but contains google.com or maps")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['website']:
+                print("   ❌ No business website found with any selector")
+            
+            # Extract rating
+            print("\n⭐ Extracting business rating...")
+            rating_selectors = [
+                '.F7nice span[aria-hidden="true"]',
+                'span.ceNzKf[aria-label*="star"]',
+                '.MW4etd',
+                '[role="img"][aria-label*="star"]'
+            ]
+            
+            for i, selector in enumerate(rating_selectors, 1):
+                print(f"   [{i}/{len(rating_selectors)}] Trying rating selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        aria_label = await element.get_attribute('aria-label')
+                        
+                        rating_text = text or aria_label or ''
+                        print(f"   Raw rating text: '{rating_text}', aria-label: '{aria_label}'")
+                        
+                        import re
+                        match = re.search(r'([0-9]\.[0-9])', rating_text)
+                        if match:
+                            business_data['rating'] = match.group(1)
+                            print(f"   ✅ Found rating: '{business_data['rating']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Text found but no rating pattern match")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['rating']:
+                print("   ❌ No business rating found with any selector")
+            
+            # Extract reviews count
+            print("\n📝 Extracting business reviews count...")
+            review_selectors = [
+                '.F7nice .RDApEe',
+                '.UY7F9',
+                'button[jsaction*="reviews"] .RDApEe',
+                '[aria-label*="review"]'
+            ]
+            
+            for i, selector in enumerate(review_selectors, 1):
+                print(f"   [{i}/{len(review_selectors)}] Trying reviews selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        aria_label = await element.get_attribute('aria-label')
+                        
+                        review_text = text or aria_label or ''
+                        print(f"   Raw reviews text: '{review_text}', aria-label: '{aria_label}'")
+                        
+                        import re
+                        match = re.search(r'([0-9,]+)', review_text)
+                        if match:
+                            business_data['reviews'] = match.group(1).replace(',', '')
+                            print(f"   ✅ Found reviews count: '{business_data['reviews']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Text found but no number pattern match")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['reviews']:
+                print("   ❌ No business reviews count found with any selector")
+            
+            # Extract category
+            print("\n🏷️ Extracting business category...")
+            category_selectors = [
+                'button[jsaction*="category"] .DkEaL',
+                '.DkEaL',
+                '[data-attrid*="category"]',
+                '.YhemCb .DkEaL'
+            ]
+            
+            for i, selector in enumerate(category_selectors, 1):
+                print(f"   [{i}/{len(category_selectors)}] Trying category selector: '{selector}'")
+                try:
+                    element = await self.page.query_selector(selector)
+                    if element:
+                        text = await element.text_content()
+                        print(f"   Found category text: '{text}'")
+                        if text and text.strip():
+                            business_data['category'] = text.strip()
+                            print(f"   ✅ Found category: '{business_data['category']}'")
+                            break
+                        else:
+                            print(f"   ⚠ Element found but no text content")
+                    else:
+                        print(f"   ✗ No element found")
+                except Exception as e:
+                    print(f"   ⚠ Error with selector: {e}")
+                    continue
+            
+            if not business_data['category']:
+                print("   ❌ No business category found with any selector")
+            
+            print(f"\n🎯 Final extracted data summary:")
+            print(f"   Name: '{business_data['name']}'")
+            print(f"   Address: '{business_data['address']}'")
+            print(f"   Phone: '{business_data['phone']}'")
+            print(f"   Website: '{business_data['website']}'")
+            print(f"   Rating: '{business_data['rating']}'")
+            print(f"   Reviews: '{business_data['reviews']}'")
+            print(f"   Category: '{business_data['category']}'")
+            
+        except Exception as e:
+            print(f"❌ Error extracting business data: {e}")
+        
+        return business_data
+    
+    async def _wait_for_business_panel(self, progress_callback=None):
+        """Wait for business details panel to load properly"""
+        try:
+            if progress_callback:
+                progress_callback.emit("⏳ Waiting for business details to load...")
+            
+            # Wait for any of these elements that indicate the panel has loaded
+            panel_indicators = [
+                'h1[data-attrid="title"]',  # Business name
+                'h1.DUwDvf',  # Alternative business name
+                '[data-item-id="address"]',  # Address section
+                '.F7nice',  # Rating section
+                'h1'  # Fallback to any h1
+            ]
+            
+            # Try to wait for panel indicators with timeout
+            for selector in panel_indicators:
+                try:
+                    await self.page.wait_for_selector(selector, timeout=5000)
+                    if progress_callback:
+                        progress_callback.emit("✅ Business details panel loaded")
+                    
+                    # Additional wait for content to stabilize
+                    await asyncio.sleep(1)
+                    return True
+                except:
+                    continue
+            
+            # If no specific indicators found, wait a bit more
+            if progress_callback:
+                progress_callback.emit("⚠️ Panel indicators not found, using fallback wait")
+            await asyncio.sleep(3)
+            return True
+            
+        except Exception as e:
+            if progress_callback:
+                progress_callback.emit(f"⚠️ Error waiting for panel: {str(e)}")
+            await asyncio.sleep(2)  # Fallback wait
+            return False
     
     async def close_browser(self):
         """Close the browser context"""
