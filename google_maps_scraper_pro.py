@@ -14,6 +14,20 @@ import time
 from pathlib import Path
 from typing import List, Dict, Optional
 import subprocess
+import hashlib
+import uuid
+import platform
+import pickle
+from datetime import datetime, timedelta
+
+# Import database connectivity
+try:
+    import psycopg2
+    from psycopg2 import sql
+except ImportError:
+    print("psycopg2 is not installed. Please install it using:")
+    print("pip install psycopg2-binary")
+    sys.exit(1)
 
 # Import PyQt5
 try:
@@ -23,7 +37,7 @@ try:
         QMessageBox, QProgressBar, QGroupBox, QScrollArea, QFrame, QSplitter, 
         QTabWidget, QTableWidget, QTableWidgetItem, QHeaderView, QComboBox,
         QSpinBox, QCheckBox, QSlider, QStatusBar, QMenuBar, QMenu, QAction,
-        QSystemTrayIcon, QStyle, QDesktopWidget
+        QSystemTrayIcon, QStyle, QDesktopWidget, QDialog, QDialogButtonBox
     )
     from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QSize
     from PyQt5.QtGui import QFont, QIcon, QPixmap, QPalette, QColor, QLinearGradient
@@ -40,6 +54,457 @@ except ImportError:
     print("pip install playwright")
     print("python -m playwright install")
     sys.exit(1)
+
+
+class LicenseManager:
+    """Manages license validation with Neon database"""
+    
+    def __init__(self):
+        self.connection_string = "postgresql://neondb_owner:npg_4GvhMte9BIoW@ep-mute-waterfall-ad00hkay-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+        self.machine_id = self._generate_machine_id()
+        self.cache_file = os.path.join(os.path.expanduser("~"), ".solo_scrapper_license.cache")
+    
+    def _generate_machine_id(self) -> str:
+        """Generate unique machine ID based on hardware characteristics"""
+        try:
+            # Get system information
+            system_info = {
+                'platform': platform.platform(),
+                'processor': platform.processor(),
+                'machine': platform.machine(),
+                'node': platform.node()
+            }
+            
+            # Create a unique string from system info
+            info_string = ''.join(str(v) for v in system_info.values())
+            
+            # Generate hash
+            machine_hash = hashlib.sha256(info_string.encode()).hexdigest()[:16]
+            return machine_hash
+        except Exception:
+            # Fallback to UUID if system info fails
+            return str(uuid.uuid4())[:16]
+    
+    def _get_connection(self):
+        """Get database connection"""
+        try:
+            return psycopg2.connect(self.connection_string)
+        except Exception as e:
+            print(f"Database connection error: {e}")
+            return None
+    
+    def validate_license(self, license_key: str) -> tuple[bool, str]:
+        """Validate license key against database"""
+        if not license_key or len(license_key.strip()) == 0:
+            return False, "License key cannot be empty"
+        
+        conn = self._get_connection()
+        if not conn:
+            return False, "Unable to connect to license server"
+        
+        try:
+            cursor = conn.cursor()
+            
+            # Check if license exists and is valid
+            cursor.execute(
+                "SELECT machine_id, valid, expires_at FROM licenses WHERE key = %s",
+                (license_key,)
+            )
+            
+            result = cursor.fetchone()
+            
+            if not result:
+                return False, "Invalid license key"
+            
+            machine_id, valid, expires_at = result
+            
+            if not valid:
+                return False, "License key has been deactivated"
+            
+            if expires_at and expires_at < datetime.now():
+                return False, "License key has expired"
+            
+            # Check if license is already bound to another machine
+            if machine_id and machine_id != self.machine_id:
+                return False, "License key is already bound to another machine"
+            
+            # Bind license to this machine if not already bound
+            if not machine_id:
+                cursor.execute(
+                    "UPDATE licenses SET machine_id = %s WHERE key = %s",
+                    (self.machine_id, license_key)
+                )
+                conn.commit()
+            
+            # Save to local cache for future use
+            self._save_license_cache(license_key, expires_at)
+            
+            return True, "License validated successfully"
+            
+        except Exception as e:
+            return False, f"License validation error: {str(e)}"
+        finally:
+            conn.close()
+    
+    def get_machine_id(self) -> str:
+        """Get the current machine ID"""
+        return self.machine_id
+    
+    def _save_license_cache(self, license_key: str, expires_at: datetime = None):
+        """Save validated license to local cache"""
+        try:
+            cache_data = {
+                'license_key': license_key,
+                'machine_id': self.machine_id,
+                'validated_at': datetime.now(),
+                'expires_at': expires_at,
+                'version': '1.0'
+            }
+            
+            with open(self.cache_file, 'wb') as f:
+                pickle.dump(cache_data, f)
+        except Exception as e:
+            print(f"Failed to save license cache: {e}")
+    
+    def _load_license_cache(self) -> dict:
+        """Load license cache from local file"""
+        try:
+            if not os.path.exists(self.cache_file):
+                return None
+            
+            with open(self.cache_file, 'rb') as f:
+                cache_data = pickle.load(f)
+            
+            # Verify cache is for this machine
+            if cache_data.get('machine_id') != self.machine_id:
+                return None
+            
+            # Check if cache has expired (cache valid for 7 days)
+            validated_at = cache_data.get('validated_at')
+            if validated_at and (datetime.now() - validated_at).days > 7:
+                return None
+            
+            # Check if license itself has expired
+            expires_at = cache_data.get('expires_at')
+            if expires_at and expires_at < datetime.now():
+                return None
+            
+            return cache_data
+        except Exception as e:
+            print(f"Failed to load license cache: {e}")
+            return None
+    
+    def verify_cached_license_with_database(self, license_key: str) -> bool:
+        """Verify cached license against database to detect changes/revocations"""
+        try:
+            conn = self._get_connection()
+            if not conn:
+                return False
+            
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT machine_id, expires_at, valid FROM licenses WHERE key = %s",
+                (license_key,)
+            )
+            result = cursor.fetchone()
+            conn.close()
+            
+            if not result:
+                # License doesn't exist in database anymore
+                return False
+            
+            machine_id, expires_at, valid = result
+            
+            # Check if license is still valid
+            if not valid:
+                return False
+            
+            # Check if license is still bound to this machine
+            if machine_id and machine_id != self.machine_id:
+                return False
+            
+            # Check if license hasn't expired
+            if expires_at and datetime.now() > expires_at:
+                return False
+            
+            return True
+            
+        except Exception as e:
+            print(f"Failed to verify cached license with database: {e}")
+            return False
+    
+    def has_valid_cached_license(self) -> bool:
+        """Check if there's a valid cached license and verify it against database"""
+        cache_data = self._load_license_cache()
+        if not cache_data:
+            return False
+        
+        license_key = cache_data.get('license_key')
+        if not license_key:
+            return False
+        
+        # Verify against database to detect changes/revocations
+        if not self.verify_cached_license_with_database(license_key):
+            # License has been changed/revoked, clear cache
+            self.clear_license_cache()
+            return False
+        
+        return True
+    
+    def get_cached_license_key(self) -> str:
+        """Get the cached license key"""
+        cache_data = self._load_license_cache()
+        return cache_data.get('license_key') if cache_data else None
+    
+    def clear_license_cache(self):
+        """Clear the license cache"""
+        try:
+            if os.path.exists(self.cache_file):
+                os.remove(self.cache_file)
+        except Exception as e:
+            print(f"Failed to clear license cache: {e}")
+
+
+class LicenseDialog(QDialog):
+    """License key input dialog"""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.license_manager = LicenseManager()
+        self.setup_ui()
+        self.setModal(True)
+    
+    def setup_ui(self):
+        """Setup the license dialog UI"""
+        self.setWindowTitle("License Activation")
+        self.setFixedSize(500, 300)
+        
+        layout = QVBoxLayout()
+        
+        # Title
+        title_label = QLabel("Solo Scrapper Pro - License Activation")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("""
+            QLabel {
+                font-size: 18px;
+                font-weight: bold;
+                color: #ffffff;
+                margin: 10px;
+            }
+        """)
+        layout.addWidget(title_label)
+        
+        # Machine ID display
+        machine_id_label = QLabel(f"Machine ID: {self.license_manager.get_machine_id()}")
+        machine_id_label.setAlignment(Qt.AlignCenter)
+        machine_id_label.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                color: #cccccc;
+                margin: 5px;
+                padding: 5px;
+                background-color: #2d2d2d;
+                border-radius: 5px;
+            }
+        """)
+        layout.addWidget(machine_id_label)
+        
+        # License key input
+        license_label = QLabel("Enter License Key:")
+        license_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                color: #ffffff;
+                margin-top: 20px;
+            }
+        """)
+        layout.addWidget(license_label)
+        
+        self.license_input = QLineEdit()
+        self.license_input.setPlaceholderText("Enter your license key here...")
+        self.license_input.setStyleSheet("""
+            QLineEdit {
+                font-size: 14px;
+                padding: 10px;
+                border: 2px solid #555555;
+                border-radius: 5px;
+                background-color: #2d2d2d;
+                color: #ffffff;
+                margin: 5px 0;
+            }
+            QLineEdit:focus {
+                border-color: #4CAF50;
+            }
+        """)
+        layout.addWidget(self.license_input)
+        
+        # Status label
+        self.status_label = QLabel("")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("""
+            QLabel {
+                font-size: 12px;
+                margin: 10px;
+                padding: 5px;
+                border-radius: 3px;
+            }
+        """)
+        layout.addWidget(self.status_label)
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        self.validate_btn = QPushButton("Validate License")
+        self.validate_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 14px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:pressed {
+                background-color: #3d8b40;
+            }
+        """)
+        self.validate_btn.clicked.connect(self.validate_license)
+        button_layout.addWidget(self.validate_btn)
+        
+        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 14px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+            QPushButton:pressed {
+                background-color: #c1170a;
+            }
+        """)
+        self.cancel_btn.clicked.connect(self.reject)
+        button_layout.addWidget(self.cancel_btn)
+        
+        layout.addLayout(button_layout)
+        
+        self.setLayout(layout)
+        
+        # Apply dark theme
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+        """)
+    
+    def validate_license(self):
+        """Validate the entered license key"""
+        license_key = self.license_input.text().strip()
+        
+        if not license_key:
+            self.show_status("Please enter a license key", "error")
+            return
+        
+        # Show loading state
+        self.show_loading_state(True)
+        
+        # Use QTimer to allow UI to update before validation
+        QTimer.singleShot(100, lambda: self.perform_validation(license_key))
+    
+    def show_loading_state(self, loading: bool):
+        """Show or hide loading state"""
+        if loading:
+            # Disable input and button
+            self.license_input.setEnabled(False)
+            self.validate_btn.setEnabled(False)
+            self.validate_btn.setText("🔄 Validating...")
+            
+            # Show loading message
+            self.show_status("🔄 Connecting to license server...", "loading")
+            
+            # Start loading animation timer
+            self.loading_timer = QTimer()
+            self.loading_dots = 0
+            self.loading_timer.timeout.connect(self.update_loading_animation)
+            self.loading_timer.start(500)  # Update every 500ms
+        else:
+            # Stop loading animation
+            if hasattr(self, 'loading_timer'):
+                self.loading_timer.stop()
+            
+            # Re-enable input and button
+            self.license_input.setEnabled(True)
+            self.validate_btn.setEnabled(True)
+            self.validate_btn.setText("Validate License")
+    
+    def update_loading_animation(self):
+        """Update loading animation dots"""
+        self.loading_dots = (self.loading_dots + 1) % 4
+        dots = "." * self.loading_dots
+        self.show_status(f"🔄 Connecting to license server{dots}", "loading")
+    
+    def perform_validation(self, license_key: str):
+        """Perform the actual license validation"""
+        # Validate license
+        is_valid, message = self.license_manager.validate_license(license_key)
+        
+        # Hide loading state
+        self.show_loading_state(False)
+        
+        if is_valid:
+            self.show_status(message, "success")
+            QTimer.singleShot(1500, self.accept)  # Close dialog after 1.5 seconds
+        else:
+            self.show_status(message, "error")
+    
+    def show_status(self, message: str, status_type: str):
+        """Show status message with appropriate styling"""
+        self.status_label.setText(message)
+        
+        if status_type == "success":
+            self.status_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    margin: 10px;
+                    padding: 5px;
+                    border-radius: 3px;
+                    background-color: #4CAF50;
+                    color: white;
+                }
+            """)
+        elif status_type == "error":
+            self.status_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    margin: 10px;
+                    padding: 5px;
+                    border-radius: 3px;
+                    background-color: #f44336;
+                    color: white;
+                }
+            """)
+        elif status_type == "loading":
+            self.status_label.setStyleSheet("""
+                QLabel {
+                    font-size: 12px;
+                    margin: 10px;
+                    padding: 5px;
+                    border-radius: 3px;
+                    background-color: #2196F3;
+                    color: white;
+                }
+            """)
 
 
 class GoogleMapsScraper:
@@ -1145,6 +1610,11 @@ class ModernScraperGUI(QMainWindow):
     
     def __init__(self):
         super().__init__()
+        
+        # Check license before initializing UI
+        if not self.check_license():
+            sys.exit(1)
+        
         self.scraping_thread = None
         self.scraped_businesses = []
         self.total_businesses = 0
@@ -1152,6 +1622,9 @@ class ModernScraperGUI(QMainWindow):
         
         self.init_ui()
         self.apply_modern_theme()
+        
+        # Setup periodic license validation
+        self.setup_license_validation_timer()
         
     def init_ui(self):
         """Initialize the user interface"""
@@ -1195,6 +1668,377 @@ class ModernScraperGUI(QMainWindow):
             (screen.width() - size.width()) // 2,
             (screen.height() - size.height()) // 2
         )
+    
+    def check_license(self) -> bool:
+        """Check if the application has a valid license"""
+        try:
+            # First check if we have a valid cached license
+            license_manager = LicenseManager()
+            if license_manager.has_valid_cached_license():
+                print(f"Using cached license: {license_manager.get_cached_license_key()}")
+                return True
+            
+            # No valid cache, show license dialog
+            license_dialog = LicenseDialog(self)
+            result = license_dialog.exec_()
+            
+            if result == QDialog.Accepted:
+                return True
+            else:
+                QMessageBox.critical(
+                    self, 
+                    "License Required", 
+                    "A valid license is required to use Solo Scrapper Pro.\n\nApplication will now exit."
+                )
+                return False
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "License Error",
+                f"An error occurred while checking the license:\n{str(e)}\n\nApplication will now exit."
+            )
+            return False
+    
+    def get_current_license_status(self) -> tuple[str, str]:
+        """Get current license status for display"""
+        try:
+            license_manager = LicenseManager()
+            
+            # Check if we have a valid cached license
+            if license_manager.has_valid_cached_license():
+                cached_key = license_manager.get_cached_license_key()
+                
+                # Get detailed license information from cache
+                cache_data = license_manager._load_license_cache()
+                if cache_data:
+                    expires_at = cache_data.get('expires_at')
+                    if expires_at:
+                        if isinstance(expires_at, str):
+                            expires_at = datetime.fromisoformat(expires_at)
+                        days_left = (expires_at - datetime.now()).days
+                        if days_left > 30:
+                            return f"✅ License Active ({days_left} days left)", "ready"
+                        elif days_left > 0:
+                            return f"⚠️ License Expires Soon ({days_left} days)", "warning"
+                        else:
+                            return "❌ License Expired", "error"
+                    else:
+                        return "✅ License Active (Permanent)", "ready"
+                else:
+                    return "✅ License Active", "ready"
+            else:
+                # Check database connection
+                conn = license_manager._get_connection()
+                if conn:
+                    conn.close()
+                    return "🔑 No License - Click to Activate", "inactive"
+                else:
+                    return "❌ Database Connection Failed", "error"
+        except Exception as e:
+            return "❌ License System Error", "error"
+    
+    def update_license_button_status(self):
+        """Update license button text and style based on current status"""
+        status_text, status_type = self.get_current_license_status()
+        
+        if hasattr(self, 'license_btn'):
+            self.license_btn.setText(status_text)
+            
+            # Update button style based on status
+            if status_type == "ready":
+                self.license_btn.setStyleSheet("""
+                    QPushButton {
+                        background: #4CAF50;
+                        color: #f0f6fc;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        margin-right: 20px;
+                    }
+                    QPushButton:hover {
+                        background: #45a049;
+                    }
+                """)
+            elif status_type == "warning":
+                self.license_btn.setStyleSheet("""
+                    QPushButton {
+                        background: #ff9800;
+                        color: #f0f6fc;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        margin-right: 20px;
+                    }
+                    QPushButton:hover {
+                        background: #e68900;
+                    }
+                """)
+            elif status_type == "inactive":
+                self.license_btn.setStyleSheet("""
+                    QPushButton {
+                        background: #2196F3;
+                        color: #f0f6fc;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        margin-right: 20px;
+                    }
+                    QPushButton:hover {
+                        background: #1976D2;
+                    }
+                """)
+            elif status_type == "error":
+                self.license_btn.setStyleSheet("""
+                    QPushButton {
+                        background: #f44336;
+                        color: #f0f6fc;
+                        border: none;
+                        padding: 8px 15px;
+                        border-radius: 5px;
+                        font-weight: bold;
+                        margin-right: 20px;
+                    }
+                    QPushButton:hover {
+                        background: #da190b;
+                    }
+                """)
+    
+    def setup_license_validation_timer(self):
+        """Setup periodic license validation timer"""
+        self.license_validation_timer = QTimer()
+        self.license_validation_timer.timeout.connect(self.validate_license_periodically)
+        # Check every 5 minutes (300000 ms)
+        self.license_validation_timer.start(300000)
+    
+    def validate_license_periodically(self):
+        """Periodically validate cached license against database"""
+        try:
+            license_manager = LicenseManager()
+            
+            # Check if we have a cached license
+            if license_manager.has_valid_cached_license():
+                cached_key = license_manager.get_cached_license_key()
+                
+                # Verify against database
+                if not license_manager.verify_cached_license_with_database(cached_key):
+                    # License has been changed/revoked in database
+                    license_manager.clear_license_cache()
+                    
+                    # Update UI to reflect license status change
+                    self.update_license_button_status()
+                    
+                    # Show notification to user
+                    QMessageBox.warning(
+                        self,
+                        "License Status Changed",
+                        "Your license has been modified or revoked. Please re-authenticate."
+                    )
+                    
+                    # Optionally show license dialog
+                    self.show_license_dialog()
+        except Exception as e:
+            print(f"Error during periodic license validation: {e}")
+    
+    def get_detailed_license_info(self) -> dict:
+        """Get detailed license information for display"""
+        try:
+            license_manager = LicenseManager()
+            info = {
+                'has_license': False,
+                'license_key': 'Not activated',
+                'status': 'Inactive',
+                'expires_at': 'N/A',
+                'days_remaining': 'N/A',
+                'machine_id': license_manager.get_machine_id(),
+                'is_bound': False
+            }
+            
+            if license_manager.has_valid_cached_license():
+                cached_key = license_manager.get_cached_license_key()
+                cache_data = license_manager._load_license_cache()
+                
+                info['has_license'] = True
+                info['license_key'] = cached_key[:8] + '...' + cached_key[-4:] if len(cached_key) > 12 else cached_key
+                info['is_bound'] = True
+                
+                if cache_data and 'expires_at' in cache_data:
+                    expires_at = cache_data['expires_at']
+                    if expires_at:
+                        if isinstance(expires_at, str):
+                            expires_at = datetime.fromisoformat(expires_at)
+                        info['expires_at'] = expires_at.strftime('%Y-%m-%d %H:%M:%S')
+                        days_left = (expires_at - datetime.now()).days
+                        info['days_remaining'] = max(0, days_left)
+                        
+                        if days_left > 0:
+                            info['status'] = 'Active'
+                        else:
+                            info['status'] = 'Expired'
+                    else:
+                        info['expires_at'] = 'Permanent'
+                        info['days_remaining'] = '∞'
+                        info['status'] = 'Active (Permanent)'
+                else:
+                    info['status'] = 'Active'
+            
+            return info
+        except Exception as e:
+            return {
+                'has_license': False,
+                'license_key': 'Error',
+                'status': f'Error: {str(e)}',
+                'expires_at': 'N/A',
+                'days_remaining': 'N/A',
+                'machine_id': 'Unknown',
+                'is_bound': False
+            }
+    
+    def show_license_status_dialog(self):
+        """Show detailed license status dialog"""
+        info = self.get_detailed_license_info()
+        
+        dialog = QDialog(self)
+        dialog.setWindowTitle("License Status")
+        dialog.setFixedSize(450, 350)
+        dialog.setStyleSheet("""
+            QDialog {
+                background-color: #0d1117;
+                color: #f0f6fc;
+            }
+            QLabel {
+                color: #f0f6fc;
+                font-size: 12px;
+            }
+            QPushButton {
+                background: #21262d;
+                color: #f0f6fc;
+                border: 1px solid #30363d;
+                padding: 8px 15px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #30363d;
+            }
+        """)
+        
+        layout = QVBoxLayout(dialog)
+        
+        # Title
+        title = QLabel("License Information")
+        title.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(title)
+        
+        # License details
+        details_layout = QVBoxLayout()
+        
+        status_color = "#4CAF50" if info['status'].startswith('Active') else "#f44336" if 'Error' in info['status'] or 'Expired' in info['status'] else "#ff9800"
+        
+        details = [
+            ("Status:", info['status'], status_color),
+            ("License Key:", info['license_key'], "#f0f6fc"),
+            ("Expires:", str(info['expires_at']), "#f0f6fc"),
+            ("Days Remaining:", str(info['days_remaining']), "#f0f6fc"),
+            ("Machine ID:", info['machine_id'], "#8b949e"),
+            ("Bound to Machine:", "Yes" if info['is_bound'] else "No", "#4CAF50" if info['is_bound'] else "#f44336")
+        ]
+        
+        for label_text, value_text, color in details:
+            row_layout = QHBoxLayout()
+            label = QLabel(label_text)
+            label.setStyleSheet("font-weight: bold; min-width: 120px;")
+            value = QLabel(value_text)
+            value.setStyleSheet(f"color: {color};")
+            row_layout.addWidget(label)
+            row_layout.addWidget(value)
+            row_layout.addStretch()
+            details_layout.addLayout(row_layout)
+        
+        layout.addLayout(details_layout)
+        layout.addStretch()
+        
+        # Buttons
+        button_layout = QHBoxLayout()
+        
+        if info['has_license']:
+            unbind_btn = QPushButton("Unbind License")
+            unbind_btn.setStyleSheet("""
+                QPushButton {
+                    background: #f44336;
+                    color: #f0f6fc;
+                }
+                QPushButton:hover {
+                    background: #da190b;
+                }
+            """)
+            unbind_btn.clicked.connect(lambda: self.unbind_license(dialog))
+            button_layout.addWidget(unbind_btn)
+        
+        activate_btn = QPushButton("Activate License" if not info['has_license'] else "Change License")
+        activate_btn.setStyleSheet("""
+            QPushButton {
+                background: #2196F3;
+                color: #f0f6fc;
+            }
+            QPushButton:hover {
+                background: #1976D2;
+            }
+        """)
+        activate_btn.clicked.connect(lambda: self.show_license_dialog(dialog))
+        button_layout.addWidget(activate_btn)
+        
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(dialog.accept)
+        button_layout.addWidget(close_btn)
+        
+        layout.addLayout(button_layout)
+        
+        dialog.exec_()
+    
+    def unbind_license(self, parent_dialog=None):
+        """Unbind the current license"""
+        reply = QMessageBox.question(
+            parent_dialog or self,
+            "Unbind License",
+            "Are you sure you want to unbind this license?\n\nThis will remove the license from this machine and you'll need to re-activate it.",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            try:
+                license_manager = LicenseManager()
+                license_manager.clear_license_cache()
+                self.update_license_button_status()
+                
+                QMessageBox.information(
+                    parent_dialog or self,
+                    "License Unbound",
+                    "License has been successfully unbound from this machine."
+                )
+                
+                if parent_dialog:
+                    parent_dialog.accept()
+                    
+            except Exception as e:
+                QMessageBox.critical(
+                    parent_dialog or self,
+                    "Error",
+                    f"Failed to unbind license: {str(e)}"
+                )
+    
+    def show_license_dialog(self, parent_dialog=None):
+        """Show license dialog for re-authentication"""
+        if parent_dialog:
+            parent_dialog.accept()
+            
+        dialog = LicenseDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            # License was successfully validated
+            self.update_license_button_status()
         
     def create_header(self, main_layout):
         """Create the header section"""
@@ -1223,16 +2067,19 @@ class ModernScraperGUI(QMainWindow):
         title_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         
         # License button
-        license_btn = QPushButton("Add Licence Key")
-        license_btn.setObjectName("licenseBtn")
-        license_btn.clicked.connect(self.show_license_dialog)
+        self.license_btn = QPushButton("Add Licence Key")
+        self.license_btn.setObjectName("licenseBtn")
+        self.license_btn.clicked.connect(self.show_license_status_dialog)
+        
+        # Update license button status
+        self.update_license_button_status()
         
         # Add widgets to top row
         top_row_layout.addWidget(logo_label)
         top_row_layout.addSpacing(15)  # Space between logo and title
         top_row_layout.addWidget(title_label)
         top_row_layout.addStretch()  # Push license button to the right
-        top_row_layout.addWidget(license_btn)
+        top_row_layout.addWidget(self.license_btn)
         
         # Subtitle (centered)
         subtitle_label = QLabel("Professional Web Scraping Tool")
@@ -2256,11 +3103,26 @@ class ModernScraperGUI(QMainWindow):
         
     def show_license_dialog(self):
         """Show license key dialog"""
-        QMessageBox.information(
-            self, 
-            "License Key", 
-            "This is a free and open-source version.\n\nNo license key required!"
-        )
+        try:
+            # Show license dialog
+            license_dialog = LicenseDialog(self)
+            result = license_dialog.exec_()
+            
+            # Update license button status after dialog closes
+            self.update_license_button_status()
+            
+            if result == QDialog.Accepted:
+                QMessageBox.information(
+                    self,
+                    "License Activated",
+                    "License has been successfully activated!\n\nYou can now use all features of Solo Scrapper Pro."
+                )
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "License Dialog Error",
+                f"An error occurred while opening the license dialog:\n{str(e)}"
+            )
         
     def start_scraping(self):
         """Start the scraping process"""
