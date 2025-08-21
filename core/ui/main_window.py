@@ -523,7 +523,7 @@ class ModernScraperGUI(QMainWindow):
                 border-radius: 6px;
                 padding: 12px;
                 font-size: 13px;
-                font-family: 'Segoe UI', Arial, sans-serif;
+                font-family: 'Segoe UI', Arial;
                 line-height: 1.4;
             }
             QTextEdit:focus {
@@ -744,7 +744,6 @@ class ModernScraperGUI(QMainWindow):
             }
             QPushButton:hover {
                 background-color: #2ecc71;
-                transform: translateY(-1px);
             }
             QPushButton:pressed {
                 background-color: #229954;
@@ -768,7 +767,6 @@ class ModernScraperGUI(QMainWindow):
             }
             QPushButton:hover {
                 background-color: #5dade2;
-                transform: translateY(-1px);
             }
             QPushButton:pressed {
                 background-color: #2980b9;
@@ -792,7 +790,6 @@ class ModernScraperGUI(QMainWindow):
             }
             QPushButton:hover {
                 background-color: #f39c12;
-                transform: translateY(-1px);
             }
             QPushButton:pressed {
                 background-color: #d35400;
@@ -1325,7 +1322,7 @@ class ModernScraperGUI(QMainWindow):
                 border-radius: 4px;
                 font-weight: bold;
                 font-size: 13px;
-                font-family: 'Arial', sans-serif;
+                font-family: Arial;
             }
 
             #licenseBtn:hover {
@@ -1379,7 +1376,7 @@ class ModernScraperGUI(QMainWindow):
                 border-radius: 6px;
                 font-weight: bold;
                 font-size: 13px;
-                font-family: 'Arial', sans-serif;
+                font-family: Arial;
                 text-align: center;
                 min-width: 100px;
             }
