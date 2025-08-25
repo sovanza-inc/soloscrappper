@@ -1,0 +1,975 @@
+Alabama
+* Alexander City
+* Andalusia
+* Anniston
+* Athens
+* Atmore
+* Auburn
+* Bessemer
+* Birmingham
+* Chickasaw
+* Clanton
+* Cullman
+* Decatur
+* Demopoliss
+* Dothan
+* Enterprise
+* Eufaula
+* Florence
+* Fort Payne
+* Gadsden
+* Greenville
+* Guntersville
+* Huntsville
+* Jasper
+* Marion
+* Mobile
+* Montgomery
+* Opelika
+* Ozark
+* Phenix City
+* Prichard
+* Scottsboro
+* Selma
+* Sheffield
+* Sylacauga
+* Talladega
+* Troy
+* Tuscaloosa
+* Tuscumbia
+* Tuskegee
+
+Alaska
+* Anchorage
+* Cordova
+* Fairbanks
+* Haines
+* Homer
+* Juneau
+* Ketchikan
+* Kodiak
+* Nome
+* Petersburg
+* Sitka
+* Skagway
+* Valdez
+* Wasilla
+
+Arizona
+* Apache Junction
+* Avondale
+* Bisbee
+* Buckeye
+* Bullhead City
+* Casa Grande
+* Chandler
+* Flagstaff
+* Fountain Hills
+* Gilbert
+* Glendale
+* Goodyear
+* Lake Havasu City
+* Mesa
+* Nogales
+* Peoria
+* Phoenix
+* Prescott
+* Scottsdale
+* Sedona
+* Sierra Vista
+* Surprise
+* Tempe
+* Tucson
+* Yuma
+
+Arkansas
+* Arkadelphia
+* Batesville
+* Bentonville
+* Blytheville
+* Camden
+* Conway
+* El Dorado
+* Fayetteville
+* Forrest City
+* Fort Smith
+* Harrison
+* Helena
+* Hope
+* Hot Springs
+* Jonesboro
+* Little Rock
+* Magnolia
+* Malvern
+* Monticello
+* Mountain Home
+* North Little Rock
+* Paragould
+* Pine Bluff
+* Rogers
+* Russellville
+* Searcy
+* Springdale
+* Texarkana
+* Van Buren
+* West Memphis
+
+California
+* Alameda
+* Alhambra
+* Anaheim
+* Antioch
+* Apple Valley
+* Arcadia
+* Bakersfield
+* Baldwin Park
+* Bellflower
+* Berkeley
+* Beverly Hills
+* Burbank
+* Carlsbad
+* Carson
+* Chico
+* Chula Vista
+* Citrus Heights
+* Clovis
+* Compton
+* Concord
+* Corona
+* Costa Mesa
+* Daly City
+* Davis
+* Downey
+* El Cajon
+* El Monte
+* Elk Grove
+* Escondido
+* Fairfield
+* Fontana
+* Fremont
+* Fresno
+* Fullerton
+* Garden Grove
+* Glendale
+* Hayward
+* Huntington Beach
+* Inglewood
+* Irvine
+* Lancaster
+* Long Beach
+* Los Angeles
+* Modesto
+* Moreno Valley
+* Mountain View
+* Napa
+* Newport Beach
+* Oakland
+* Oceanside
+* Ontario
+* Orange
+* Oxnard
+* Palmdale
+* Palo Alto
+* Pasadena
+* Pomona
+* Rancho Cucamonga
+* Redding
+* Richmond
+* Riverside
+* Sacramento
+* Salinas
+* San Bernardino
+* San Diego
+* San Francisco
+* San Jose
+* San Mateo
+* Santa Ana
+* Santa Barbara
+* Santa Clara
+* Santa Clarita
+* Santa Monica
+* Santa Rosa
+* Simi Valley
+* Stockton
+* Sunnyvale
+* Thousand Oaks
+* Torrance
+* Vallejo
+* Ventura
+* Visalia
+* West Covina
+
+Colorado
+* Arvada
+* Aurora
+* Boulder
+* Broomfield
+* Colorado Springs
+* Denver
+* Fort Collins
+* Grand Junction
+* Greeley
+* Lakewood
+* Longmont
+* Loveland
+* Pueblo
+* Thornton
+* Westminster
+
+Connecticut
+* Bridgeport
+* Bristol
+* Danbury
+* Hartford
+* Meriden
+* Middletown
+* Milford
+* New Britain
+* New Haven
+* Norwalk
+* Norwich
+* Stamford
+* Torrington
+* Waterbury
+* West Haven
+
+Delaware
+* Dover
+* Newark
+* Wilmington
+
+Florida
+* Altamonte Springs
+* Apopka
+* Aventura
+* Boca Raton
+* Boynton Beach
+* Bradenton
+* Cape Coral
+* Clearwater
+* Coconut Creek
+* Coral Gables
+* Coral Springs
+* Daytona Beach
+* Deerfield Beach
+* Delray Beach
+* Fort Lauderdale
+* Fort Myers
+* Gainesville
+* Hialeah
+* Hollywood
+* Homestead
+* Jacksonville
+* Jupiter
+* Kissimmee
+* Lakeland
+* Largo
+* Melbourne
+* Miami
+* Miami Beach
+* Miramar
+* Naples
+* Ocala
+* Orlando
+* Palm Bay
+* Palm Beach Gardens
+* Pembroke Pines
+* Pensacola
+* Plantation
+* Pompano Beach
+* Port St. Lucie
+* St. Petersburg
+* Sarasota
+* Sunrise
+* Tallahassee
+* Tampa
+* West Palm Beach
+
+Georgia
+* Albany
+* Alpharetta
+* Athens
+* Atlanta
+* Augusta
+* Columbus
+* Decatur
+* Duluth
+* Gainesville
+* Kennesaw
+* Macon
+* Marietta
+* Roswell
+* Sandy Springs
+* Savannah
+* Smyrna
+* Valdosta
+* Warner Robins
+
+Hawaii
+* Hilo
+* Honolulu
+* Kailua
+* Kaneohe
+* Pearl City
+
+Idaho
+* Boise
+* Caldwell
+* Coeur d'Alene
+* Idaho Falls
+* Lewiston
+* Meridian
+* Nampa
+* Pocatello
+* Twin Falls
+
+Illinois
+* Arlington Heights
+* Aurora
+* Berwyn
+* Bloomington
+* Bolingbrook
+* Champaign
+* Chicago
+* Cicero
+* Decatur
+* DeKalb
+* Des Plaines
+* Elgin
+* Elmhurst
+* Evanston
+* Joliet
+* Naperville
+* Normal
+* Oak Lawn
+* Oak Park
+* Orland Park
+* Palatine
+* Park Ridge
+* Peoria
+* Quincy
+* Rock Island
+* Rockford
+* Schaumburg
+* Skokie
+* Springfield
+* Tinley Park
+* Urbana
+* Waukegan
+* Wheaton
+
+Indiana
+* Anderson
+* Bloomington
+* Carmel
+* Evansville
+* Fishers
+* Fort Wayne
+* Gary
+* Hammond
+* Indianapolis
+* Kokomo
+* Lafayette
+* Muncie
+* Noblesville
+* South Bend
+* Terre Haute
+
+Iowa
+* Ames
+* Ankeny
+* Burlington
+* Cedar Falls
+* Cedar Rapids
+* Council Bluffs
+* Davenport
+* Des Moines
+* Dubuque
+* Iowa City
+* Marion
+* Marshalltown
+* Mason City
+* Sioux City
+* Urbandale
+* Waterloo
+* West Des Moines
+
+Kansas
+* Dodge City
+* Garden City
+* Hutchinson
+* Kansas City
+* Lawrence
+* Leavenworth
+* Leawood
+* Lenexa
+* Manhattan
+* Olathe
+* Overland Park
+* Salina
+* Shawnee
+* Topeka
+* Wichita
+
+Kentucky
+* Bowling Green
+* Covington
+* Frankfort
+* Henderson
+* Hopkinsville
+* Lexington
+* Louisville
+* Owensboro
+* Paducah
+* Richmond
+
+Louisiana
+* Alexandria
+* Baton Rouge
+* Bossier City
+* Houma
+* Kenner
+* Lafayette
+* Lake Charles
+* Monroe
+* New Orleans
+* Shreveport
+
+Maine
+* Auburn
+* Augusta
+* Bangor
+* Biddeford
+* Lewiston
+* Portland
+* Saco
+* South Portland
+* Waterville
+* Westbrook
+
+Maryland
+* Annapolis
+* Baltimore
+* Bowie
+* Columbia
+* Frederick
+* Gaithersburg
+* Germantown
+* Hagerstown
+* Rockville
+* Salisbury
+
+Massachusetts
+* Attleboro
+* Barnstable
+* Boston
+* Brockton
+* Cambridge
+* Chicopee
+* Fall River
+* Fitchburg
+* Framingham
+* Haverhill
+* Holyoke
+* Lawrence
+* Leominster
+* Lowell
+* Lynn
+* Malden
+* Marlborough
+* Medford
+* New Bedford
+* Newton
+* Peabody
+* Pittsfield
+* Quincy
+* Revere
+* Salem
+* Somerville
+* Springfield
+* Taunton
+* Waltham
+* Westfield
+* Weymouth
+* Woburn
+* Worcester
+
+Michigan
+* Ann Arbor
+* Battle Creek
+* Bay City
+* Dearborn
+* Detroit
+* Farmington Hills
+* Flint
+* Grand Rapids
+* Jackson
+* Kalamazoo
+* Lansing
+* Livonia
+* Midland
+* Muskegon
+* Pontiac
+* Rochester Hills
+* Royal Oak
+* Saginaw
+* Southfield
+* Sterling Heights
+* Troy
+* Warren
+* Westland
+* Wyoming
+
+Minnesota
+* Bloomington
+* Brooklyn Park
+* Burnsville
+* Coon Rapids
+* Duluth
+* Eagan
+* Eden Prairie
+* Edina
+* Maple Grove
+* Minneapolis
+* Minnetonka
+* Moorhead
+* Plymouth
+* Rochester
+* Saint Cloud
+* Saint Paul
+* Woodbury
+
+Mississippi
+* Biloxi
+* Columbus
+* Greenville
+* Gulfport
+* Hattiesburg
+* Jackson
+* Meridian
+* Natchez
+* Pascagoula
+* Tupelo
+* Vicksburg
+
+Missouri
+* Blue Springs
+* Cape Girardeau
+* Columbia
+* Ferguson
+* Florissant
+* Independence
+* Jefferson City
+* Joplin
+* Kansas City
+* Lee's Summit
+* O'Fallon
+* Springfield
+* St. Charles
+* St. Joseph
+* St. Louis
+* St. Peters
+
+Montana
+* Billings
+* Bozeman
+* Butte
+* Great Falls
+* Helena
+* Kalispell
+* Missoula
+
+Nebraska
+* Bellevue
+* Fremont
+* Grand Island
+* Kearney
+* Lincoln
+* Norfolk
+* North Platte
+* Omaha
+
+Nevada
+* Carson City
+* Henderson
+* Las Vegas
+* North Las Vegas
+* Reno
+* Sparks
+
+New Hampshire
+* Concord
+* Derry
+* Dover
+* Keene
+* Manchester
+* Merrimack
+* Nashua
+* Portsmouth
+* Rochester
+* Salem
+
+New Jersey
+* Atlantic City
+* Bayonne
+* Camden
+* Clifton
+* East Orange
+* Elizabeth
+* Hoboken
+* Jersey City
+* Newark
+* New Brunswick
+* Passaic
+* Paterson
+* Perth Amboy
+* Plainfield
+* Trenton
+* Union City
+* Vineland
+* West New York
+
+New Mexico
+* Albuquerque
+* Carlsbad
+* Clovis
+* Farmington
+* Gallup
+* Las Cruces
+* Rio Rancho
+* Roswell
+* Santa Fe
+
+New York
+* Albany
+* Binghamton
+* Buffalo
+* Elmira
+* Freeport
+* Hempstead
+* Ithaca
+* Mount Vernon
+* New Rochelle
+* New York City
+* Niagara Falls
+* Poughkeepsie
+* Rochester
+* Rome
+* Schenectady
+* Syracuse
+* Troy
+* Utica
+* Watertown
+* White Plains
+* Yonkers
+
+North Carolina
+* Asheville
+* Burlington
+* Cary
+* Chapel Hill
+* Charlotte
+* Concord
+* Durham
+* Fayetteville
+* Gastonia
+* Goldsboro
+* Greensboro
+* Greenville
+* Hickory
+* High Point
+* Huntersville
+* Jacksonville
+* Kannapolis
+* Monroe
+* New Bern
+* Raleigh
+* Rocky Mount
+* Salisbury
+* Wilmington
+* Wilson
+* Winston-Salem
+
+North Dakota
+* Bismarck
+* Fargo
+* Grand Forks
+* Minot
+* West Fargo
+
+Ohio
+* Akron
+* Canton
+* Cincinnati
+* Cleveland
+* Columbus
+* Dayton
+* Elyria
+* Euclid
+* Fairborn
+* Findlay
+* Hamilton
+* Kettering
+* Lakewood
+* Lima
+* Lorain
+* Mansfield
+* Marion
+* Middletown
+* Newark
+* Parma
+* Springfield
+* Toledo
+* Warren
+* Youngstown
+
+Oklahoma
+* Bartlesville
+* Broken Arrow
+* Edmond
+* Enid
+* Lawton
+* Moore
+* Muskogee
+* Norman
+* Oklahoma City
+* Ponca City
+* Shawnee
+* Stillwater
+* Tulsa
+
+Oregon
+* Beaverton
+* Bend
+* Corvallis
+* Eugene
+* Gresham
+* Hillsboro
+* Lake Oswego
+* Medford
+* Portland
+* Salem
+* Springfield
+* Tigard
+
+Pennsylvania
+* Allentown
+* Altoona
+* Bethlehem
+* Chester
+* Erie
+* Harrisburg
+* Johnstown
+* Lancaster
+* Lebanon
+* McKeesport
+* New Castle
+* Norristown
+* Philadelphia
+* Pittsburgh
+* Reading
+* Scranton
+* State College
+* Wilkes-Barre
+* Williamsport
+* York
+
+Rhode Island
+* Cranston
+* East Providence
+* Newport
+* Pawtucket
+* Providence
+* Warwick
+* Woonsocket
+
+South Carolina
+* Aiken
+* Anderson
+* Charleston
+* Columbia
+* Florence
+* Greenville
+* Greenwood
+* Hilton Head Island
+* Mount Pleasant
+* Myrtle Beach
+* North Charleston
+* Rock Hill
+* Spartanburg
+* Sumter
+
+South Dakota
+* Aberdeen
+* Brookings
+* Huron
+* Mitchell
+* Pierre
+* Rapid City
+* Sioux Falls
+* Vermillion
+* Watertown
+* Yankton
+
+Tennessee
+* Bartlett
+* Bristol
+* Chattanooga
+* Clarksville
+* Cleveland
+* Collierville
+* Columbia
+* Cookeville
+* Franklin
+* Germantown
+* Hendersonville
+* Jackson
+* Johnson City
+* Kingsport
+* Knoxville
+* Memphis
+* Morristown
+* Murfreesboro
+* Nashville
+* Oak Ridge
+* Smyrna
+
+Texas
+* Abilene
+* Allen
+* Amarillo
+* Arlington
+* Austin
+* Baytown
+* Beaumont
+* Brownsville
+* Bryan
+* Carrollton
+* College Station
+* Corpus Christi
+* Dallas
+* Denton
+* El Paso
+* Fort Worth
+* Frisco
+* Galveston
+* Garland
+* Grand Prairie
+* Houston
+* Irving
+* Killeen
+* Laredo
+* League City
+* Lewisville
+* Lubbock
+* McAllen
+* McKinney
+* Mesquite
+* Midland
+* Odessa
+* Pasadena
+* Pearland
+* Plano
+* Richardson
+* Round Rock
+* San Antonio
+* Sugar Land
+* Tyler
+* Waco
+* Wichita Falls
+
+Utah
+* Layton
+* Logan
+* Ogden
+* Orem
+* Provo
+* Salt Lake City
+* Sandy
+* St. George
+* Taylorsville
+* West Jordan
+* West Valley City
+
+Vermont
+* Barre
+* Burlington
+* Essex
+* Montpelier
+* Rutland
+* South Burlington
+
+Virginia
+* Alexandria
+* Chesapeake
+* Danville
+* Hampton
+* Lynchburg
+* Newport News
+* Norfolk
+* Petersburg
+* Portsmouth
+* Richmond
+* Roanoke
+* Suffolk
+* Virginia Beach
+
+Washington
+* Auburn
+* Bellevue
+* Bellingham
+* Bothell
+* Bremerton
+* Burien
+* Edmonds
+* Everett
+* Federal Way
+* Kennewick
+* Kent
+* Kirkland
+* Lakewood
+* Lynnwood
+* Marysville
+* Olympia
+* Pasco
+* Redmond
+* Renton
+* Richland
+* Seattle
+* Spokane
+* Tacoma
+* Vancouver
+* Walla Walla
+* Yakima
+
+West Virginia
+* Charleston
+* Huntington
+* Martinsburg
+* Morgantown
+* Parkersburg
+* Wheeling
+
+Wisconsin
+* Appleton
+* Eau Claire
+* Fond du Lac
+* Green Bay
+* Janesville
+* Kenosha
+* La Crosse
+* Madison
+* Milwaukee
+* Oshkosh
+* Racine
+* Sheboygan
+* Waukesha
+* Wauwatosa
+* West Allis
+
+Wyoming
+* Casper
+* Cheyenne
+* Gillette
+* Laramie
+* Rock Springs
